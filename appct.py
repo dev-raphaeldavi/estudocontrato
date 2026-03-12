@@ -10,7 +10,7 @@ import io
 # ==========================================
 st.set_page_config(page_title="ESTUDO DE CONTRATO", layout="wide", initial_sidebar_state="expanded")
 
-# CSS BLINDADO: Resolve o esmagamento, mantém borda única e visibilidade total
+# CSS "VISIBILIDADE TOTAL": Resolve o texto dos filtros e mantém o padrão de bordas
 st.markdown("""
     <style>
     /* 1. Reset de Interface */
@@ -21,39 +21,40 @@ st.markdown("""
     
     .stApp h1 { color: #0f172a !important; font-weight: 800 !important; margin-top: -20px !important; }
 
-    /* 2. FIM DO ESMAGAMENTO E BORDA DUPLA */
-    /* Removemos as bordas de todas as camadas inferiores primeiro */
+    /* --- AJUSTE SOLICITADO: TEXTO 'FILTROS DE PESQUISA' EM PRETO NEGRITO --- */
+    [data-testid="stSidebar"] h3, 
+    [data-testid="stSidebar"] .stMarkdown p {
+        color: #000000 !important;
+        font-weight: 800 !important;
+        opacity: 1 !important;
+    }
+
+    /* 2. DESIGN DOS BOTÕES E SELETORES (Com borda preta padronizada) */
     [data-testid="stMultiSelect"] div,
     [data-testid="stMultiSelect"] [data-baseweb="select"],
     [data-testid="stMultiSelect"] [data-baseweb="select"] > div,
-    div[role="combobox"],
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
         border: none !important;
         outline: none !important;
         box-shadow: none !important;
-        border-color: transparent !important;
     }
 
-    /* Aplicamos o design no nível correto para evitar a bordinha interna */
     [data-testid="stMultiSelect"] [data-baseweb="select"] > div,
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%) !important;
         border-radius: 6px !important;
-        min-height: 58px !important; /* Altura aumentada para não esmagar */
+        min-height: 55px !important;
         height: auto !important;
-        padding: 2px 15px !important;
+        padding: 5px 15px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        
-        /* ÚNICA BORDINHA PRETA */
         border: 1px solid #000000 !important; 
     }
 
-    /* 3. FORÇA O TEXTO A RESPIRAR (Resolve image_801656.png) */
-    /* Target cirúrgico nos textos que estão sendo esmagados */
+    /* 3. FORÇA O TEXTO INTERNO A FICAR PRETO (Fim do sumiço no online) */
     [data-testid="stFormSubmitButton"] button p, 
     [data-testid="stDownloadButton"] button p,
     [data-testid="stMultiSelect"] span,
@@ -64,15 +65,9 @@ st.markdown("""
         -webkit-text-fill-color: #000000 !important;
         font-weight: 700 !important;
         font-size: 1rem !important;
-        
-        /* O segredo contra o esmagamento: line-height e margin reset */
-        line-height: 1.6 !important; 
-        margin: 0 !important;
-        padding: 0 !important;
-        
+        line-height: 1.3 !important;
+        opacity: 1 !important;
         background-color: transparent !important;
-        text-decoration: none !important;
-        overflow: visible !important;
     }
 
     /* 4. CARTÕES DE MÉTRICAS */
