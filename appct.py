@@ -3,30 +3,32 @@ import pandas as pd
 from fpdf import FPDF
 import os
 from datetime import datetime
-import io
+import io  # ESSENCIAL para o funcionamento online
 
 # ==========================================
 # 1. CONFIGURAÇÕES DA PÁGINA E ESTILIZAÇÃO
 # ==========================================
 st.set_page_config(page_title="ESTUDO DE CONTRATO", layout="wide", initial_sidebar_state="expanded")
 
-# CSS AGRESSIVO: Resolve visibilidade, nomes cortados e cores
+# CSS AGRESSIVO: Resolve visibilidade, nomes cortados e cores no Cloud
 st.markdown("""
     <style>
-    /* 1. Visibilidade Geral */
+    /* 1. Visibilidade do Título Principal e Header */
     [data-testid="stHeader"] { background-color: transparent !important; }
     [data-testid="stMainMenu"], .stDeployButton { display: none !important; }
     [data-testid="collapsedControl"] * { color: #0f172a !important; }
-    .stApp, [data-testid="stSidebar"] { background-color: #FFFFFF !important; }
     
-    /* 2. Título Principal e Labels */
-    .stApp h1, .stApp h2, .stApp h3, .stApp p, label {
+    /* Força a cor do Título Principal */
+    .stApp h1 {
         color: #0f172a !important;
-        font-weight: 700 !important;
-        opacity: 1 !important;
+        font-weight: 800 !important;
+        text-shadow: none !important;
     }
 
-    /* 3. SOLUÇÃO PARA NOMES CORTADOS (BOTÕES E FILTROS) */
+    .block-container { padding-top: 2rem !important; }
+    .stApp, [data-testid="stSidebar"] { background-color: #FFFFFF !important; }
+
+    /* 2. SOLUÇÃO PARA NOMES CORTADOS (BOTÕES E FILTROS) */
     div[data-baseweb="select"] > div, 
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
@@ -34,32 +36,33 @@ st.markdown("""
         border: 1px solid #38bdf8 !important;
         border-radius: 6px !important;
         
-        /* Remove travas de altura do Streamlit */
+        /* Remove travas de altura e permite que o botão cresça para baixo */
         min-height: 55px !important;
         height: auto !important;
-        padding: 10px !important;
+        padding: 10px 15px !important;
         
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        white-space: normal !important; /* Permite quebra de linha */
+        white-space: normal !important; 
+        text-align: center !important;
         overflow: visible !important;
     }
-
-    /* Força texto ESCURO e CENTRALIZADO dentro dos botões */
+    
+    /* Força texto ESCURO e visível dentro de tudo que for azul */
     [data-testid="stFormSubmitButton"] button p, 
     [data-testid="stDownloadButton"] button p,
     div[data-baseweb="select"] div,
-    span[data-baseweb="tag"] {
+    span[data-baseweb="tag"],
+    label {
         color: #0f172a !important;
-        font-weight: 800 !important;
-        font-size: 0.95rem !important;
+        font-weight: 700 !important;
+        font-size: 1rem !important;
         line-height: 1.2 !important;
         background-color: transparent !important;
-        text-align: center !important;
     }
 
-    /* 4. CARTÕES DE MÉTRICAS */
+    /* 3. CARTÕES DE MÉTRICAS */
     .custom-metric-card {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%);
         border: 1px solid #38bdf8;
@@ -69,8 +72,8 @@ st.markdown("""
         text-align: left;
         margin-bottom: 1.2rem;
     }
-    .custom-metric-title { color: #0f172a; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; }
-    .custom-metric-value { color: #014c8c; font-size: 1.9rem; font-weight: 800; }
+    .custom-metric-title { color: #0f172a; font-weight: 700; font-size: 0.95rem; text-transform: uppercase; }
+    .custom-metric-value { color: #014c8c; font-size: 2rem; font-weight: 800; }
 
     [data-testid="stForm"] { border: none !important; padding: 0 !important; }
     </style>
@@ -80,7 +83,7 @@ def criar_cartao(titulo, valor):
     st.markdown(f'<div class="custom-metric-card"><div class="custom-metric-title">{titulo}</div><div class="custom-metric-value">{valor}</div></div>', unsafe_allow_html=True)
 
 # ==========================================
-# 2. LÓGICA DE EXTENSÕES (Aquedutos e Canais)
+# 2. LÓGICA DE EXTENSÕES
 # ==========================================
 MAPA_EXTENSAO_KM = {
     '2218': 28.38, '2718': 28.38, '2219': 3.02, '2719': 3.02,
@@ -173,7 +176,7 @@ with col5: criar_cartao("Extensão Total Única", f"{ext_km:.3f} km")
 with col6: criar_cartao("Custo Total por KM", fmt(c_km))
 
 # ==========================================
-# 7. MOTOR DO PDF (CORREÇÃO ABSOLUTA)
+# 7. MOTOR DO PDF (BLINDADO CONTRA ERROS DE BYTES)
 # ==========================================
 class RelatorioPDF(FPDF):
     def header(self):
@@ -189,7 +192,6 @@ def gerar_pdf_final():
     pdf.set_margins(15, 15, 15)
     pdf.add_page()
     
-    # Identificação do Filtro no PDF
     pdf.set_font("Arial", 'B', 11)
     pdf.cell(180, 10, "IDENTIFICACAO DA PESQUISA:", 0, 1)
     pdf.set_font("Arial", '', 10)
@@ -198,7 +200,6 @@ def gerar_pdf_final():
     l_t = f"Local: {', '.join(locais_sel)}" if locais_sel else "Local: Geral"
     a_t = f"Ano: {', '.join(anos_sel)}" if anos_sel else "Ano: Geral"
     
-    # O .encode('latin-1', 'replace') resolve caracteres brasileiros no Linux
     pdf.cell(180, 7, w_t.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
     pdf.cell(180, 7, l_t.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
     pdf.cell(180, 7, a_t.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
@@ -217,23 +218,20 @@ def gerar_pdf_final():
     for n, v in m_list:
         pdf.cell(60, 10, n, 1); pdf.cell(120, 10, v, 1); pdf.ln()
     
-    # --- O PONTO CHAVE DA CORREÇÃO ---
-    # Capturamos o PDF em uma variável
-    resultado_pdf = pdf.output()
-    
-    # Se o resultado já for bytes (comum no Cloud/fpdf2), retornamos direto
-    if isinstance(resultado_pdf, (bytes, bytearray)):
-        return resultado_pdf
-    # Se for string (comum local/fpdf antigo), codificamos
-    return resultado_pdf.encode('latin-1')
+    # SOLUÇÃO FINAL PARA O CLOUD: Saída direta em Bytes
+    return pdf.output()
 
 nome_pdf = f"relatorio_{'_'.join(wbs_sel)}.pdf" if wbs_sel else "relatorio_geral.pdf"
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📄 Relatórios")
+
+# Captura os dados do PDF
+pdf_data = gerar_pdf_final()
+
 st.sidebar.download_button(
     label="Baixar Relatório em PDF",
-    data=gerar_pdf_final(),
+    data=pdf_data,
     file_name=nome_pdf,
     mime="application/pdf",
     use_container_width=True
