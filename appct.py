@@ -10,7 +10,7 @@ import io
 # ==========================================
 st.set_page_config(page_title="ESTUDO DE CONTRATO", layout="wide", initial_sidebar_state="expanded")
 
-# CSS DEFINITIVO: Resolve nomes cortados, visibilidade e mantém degradê
+# CSS "ZERO BORDAS": Remove bordas, contornos e sombras pretas de todas as camadas
 st.markdown("""
     <style>
     /* 1. Visibilidade do Título e Topo */
@@ -21,28 +21,40 @@ st.markdown("""
     .stApp h1 { 
         color: #0f172a !important; 
         font-weight: 800 !important; 
-        padding-top: 0px !important;
         margin-top: -20px !important;
     }
     
     .stApp, [data-testid="stSidebar"] { background-color: #FFFFFF !important; }
 
-    /* 2. CORREÇÃO DOS NOMES BUGADOS (Selectores e Botões) */
-    /* Alvo: WBS, Local e Ano - Removemos travas de altura internas */
+    /* 2. REMOÇÃO TOTAL DE BORDAS PRETAS (Botoes e Seletores) */
+    /* Atacamos o componente, o div interno e o estado de foco */
+    [data-testid="stMultiSelect"] div,
     [data-testid="stMultiSelect"] div[data-baseweb="select"],
+    [data-testid="stFormSubmitButton"] button, 
+    [data-testid="stDownloadButton"] button,
+    div[role="combobox"] {
+        border: none !important;
+        border-color: transparent !important;
+        outline: none !important;
+        box-shadow: none !important;
+        text-decoration: none !important;
+    }
+
+    /* Aplica o degradê e garante que a borda continue invisível mesmo ao clicar */
+    div[data-baseweb="select"] > div,
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%) !important;
-        border: 1px solid #38bdf8 !important;
         border-radius: 6px !important;
         min-height: 48px !important;
         height: auto !important;
         padding: 2px 10px !important;
         display: flex !important;
         align-items: center !important;
+        border: 0px !important; /* Reforço */
     }
 
-    /* Força o texto interno a ficar legível, preto e centralizado */
+    /* Força o texto interno a ficar legível e centralizado */
     [data-testid="stFormSubmitButton"] button p, 
     [data-testid="stDownloadButton"] button p,
     div[data-baseweb="select"] span,
@@ -51,15 +63,14 @@ st.markdown("""
         color: #0f172a !important;
         font-weight: 700 !important;
         font-size: 0.95rem !important;
-        line-height: 1.4 !important; /* Aumentado para evitar o efeito "achatado" */
+        line-height: 1.4 !important;
         background-color: transparent !important;
-        text-transform: none !important;
     }
 
     /* 3. CARTÕES DE MÉTRICAS */
     .custom-metric-card {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%);
-        border: 1px solid #38bdf8;
+        border: none !important;
         border-radius: 8px;
         padding: 22px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.08);
@@ -77,7 +88,7 @@ def criar_cartao(titulo, valor):
     st.markdown(f'<div class="custom-metric-card"><div class="custom-metric-title">{titulo}</div><div class="custom-metric-value">{valor}</div></div>', unsafe_allow_html=True)
 
 # ==========================================
-# 2. LÓGICA DE EXTENSÕES (Aquedutos e Canais)
+# 2. LÓGICA DE EXTENSÕES
 # ==========================================
 MAPA_EXTENSAO_KM = {
     '2218': 28.38, '2718': 28.38, '2219': 3.02, '2719': 3.02,
@@ -170,7 +181,7 @@ with col5: criar_cartao("Extensão Total Única", f"{ext_km:.3f} km")
 with col6: criar_cartao("Custo Total por KM", fmt(c_km))
 
 # ==========================================
-# 7. MOTOR DO PDF (Versão Estável Cloud)
+# 7. MOTOR DO PDF
 # ==========================================
 class RelatorioPDF(FPDF):
     def header(self):
@@ -214,7 +225,6 @@ def gerar_pdf_final():
         pdf.cell(110, 10, v.encode('latin-1', 'replace').decode('latin-1'), 1)
         pdf.ln()
     
-    # Gerando como Bytes para evitar o erro no Cloud
     output = pdf.output(dest='S')
     if isinstance(output, str):
         return io.BytesIO(output.encode('latin-1'))
@@ -227,7 +237,7 @@ st.sidebar.markdown("### 📄 Relatórios")
 
 st.sidebar.download_button(
     label="Baixar Relatório em PDF",
-    data=gerar_pdf_final().getvalue(), # Pega os bytes do BytesIO
+    data=gerar_pdf_final().getvalue(),
     file_name=nome_pdf,
     mime="application/pdf",
     use_container_width=True
