@@ -10,7 +10,7 @@ import io
 # ==========================================
 st.set_page_config(page_title="ESTUDO DE CONTRATO", layout="wide", initial_sidebar_state="expanded")
 
-# CSS "ZERO BORDAS": Remove bordas, contornos e sombras pretas de todas as camadas
+# CSS "TOTAL CLEAR": Remove bordas, contornos e resolve o achatamento do texto
 st.markdown("""
     <style>
     /* 1. Visibilidade do Título e Topo */
@@ -26,21 +26,18 @@ st.markdown("""
     
     .stApp, [data-testid="stSidebar"] { background-color: #FFFFFF !important; }
 
-    /* 2. REMOÇÃO TOTAL DE BORDAS PRETAS (Botoes e Seletores) */
-    /* Atacamos o componente, o div interno e o estado de foco */
+    /* 2. RESOLVENDO TEXTO ACHATADO E CORTADO (Filtros e Botões) */
+    /* Atacamos todas as camadas internas do seletor para remover bordas e liberar espaço */
     [data-testid="stMultiSelect"] div,
-    [data-testid="stMultiSelect"] div[data-baseweb="select"],
+    [data-testid="stMultiSelect"] [data-baseweb="select"],
     [data-testid="stFormSubmitButton"] button, 
-    [data-testid="stDownloadButton"] button,
-    div[role="combobox"] {
+    [data-testid="stDownloadButton"] button {
         border: none !important;
-        border-color: transparent !important;
         outline: none !important;
         box-shadow: none !important;
-        text-decoration: none !important;
     }
 
-    /* Aplica o degradê e garante que a borda continue invisível mesmo ao clicar */
+    /* Aplica o degradê e garante que o texto tenha altura livre para aparecer */
     div[data-baseweb="select"] > div,
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
@@ -48,13 +45,13 @@ st.markdown("""
         border-radius: 6px !important;
         min-height: 48px !important;
         height: auto !important;
-        padding: 2px 10px !important;
+        padding: 5px 12px !important; /* Respiro interno para o texto */
         display: flex !important;
         align-items: center !important;
-        border: 0px !important; /* Reforço */
+        justify-content: center !important;
     }
 
-    /* Força o texto interno a ficar legível e centralizado */
+    /* FORÇA O TEXTO A APARECER (Evita o efeito achatado da imagem image_808e34) */
     [data-testid="stFormSubmitButton"] button p, 
     [data-testid="stDownloadButton"] button p,
     div[data-baseweb="select"] span,
@@ -62,9 +59,11 @@ st.markdown("""
     label {
         color: #0f172a !important;
         font-weight: 700 !important;
-        font-size: 0.95rem !important;
-        line-height: 1.4 !important;
+        font-size: 1rem !important;
+        line-height: 1.2 !important; /* Espaço vital para o texto */
         background-color: transparent !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
     /* 3. CARTÕES DE MÉTRICAS */
