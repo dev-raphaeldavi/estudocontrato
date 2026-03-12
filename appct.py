@@ -3,14 +3,14 @@ import pandas as pd
 from fpdf import FPDF
 import os
 from datetime import datetime
-import io
+import io  # ESSENCIAL: Resolve o erro de bytes/mime no Cloud
 
 # ==========================================
 # 1. CONFIGURAÇÕES DA PÁGINA E ESTILIZAÇÃO
 # ==========================================
 st.set_page_config(page_title="ESTUDO DE CONTRATO", layout="wide", initial_sidebar_state="expanded")
 
-# CSS "LIMPEZA TOTAL": Sem bordas e com texto centralizado sem cortes
+# CSS NUCLEAR: Resolve o sumiço de texto e ELIMINA A BORDA DUPLA
 st.markdown("""
     <style>
     /* 1. Reset de Interface */
@@ -21,11 +21,15 @@ st.markdown("""
     
     .stApp h1 { color: #0f172a !important; font-weight: 800 !important; margin-top: -20px !important; }
 
-    /* 2. REMOÇÃO DE BORDAS E AJUSTE DE ALTURA (Filtros e Botões) */
-    /* Alvo: O seletor inteiro e suas subcamadas */
-    [data-testid="stMultiSelect"], 
-    [data-testid="stMultiSelect"] > div, 
-    [data-testid="stMultiSelect"] div[data-baseweb="select"],
+    /* 2. ELIMINAÇÃO ABSOLUTA DA BORDA DUPLA (O segredo paraimage_801d9c.png) */
+    /* Atacamos o componente, suas divisões internas e o estado de foco simulado (BaseWeb) */
+    
+    /* Etapa 1: Remover TUDO de todos os níveis */
+    [data-testid="stMultiSelect"] div,
+    [data-testid="stMultiSelect"] [data-baseweb="select"],
+    [data-testid="stMultiSelect"] [data-baseweb="select"] > div,
+    div[role="combobox"],
+    div[data-baseweb="select"] *:focus,
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
         border: none !important;
@@ -34,41 +38,44 @@ st.markdown("""
         border-color: transparent !important;
     }
 
-    /* Aplica o degradê e libera o espaço para o texto não ser esmagado */
-    div[data-baseweb="select"] > div,
+    /* Etapa 2: Aplicar degradê e a ÚNICA BORDA PRETA permitida no elemento correto */
+    [data-testid="stMultiSelect"] [data-baseweb="select"] > div, /* O contêiner visual real do select */
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%) !important;
         border-radius: 6px !important;
-        min-height: 52px !important; /* Altura garantida para o texto */
+        min-height: 52px !important;
         height: auto !important;
         padding: 5px 15px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
+        
+        /* --- ESTA É A ÚNICA BORDINHA PRETA QUE FICA --- */
+        border: 1px solid #000000 !important; 
     }
 
-    /* FORÇA O TEXTO A APARECER INTEIRO (Preto e nítido) */
-    /* Target específico para o texto "Geral" e seleções */
+    /* 3. FORÇA O TEXTO A FICAR PRETO (Fim dos nomes desaparecidos/bugados) */
+    [data-testid="stFormSubmitButton"] button p, 
+    [data-testid="stDownloadButton"] button p,
     [data-testid="stMultiSelect"] span,
     [data-testid="stMultiSelect"] div,
     div[data-baseweb="select"] *,
-    [data-testid="stFormSubmitButton"] button p, 
-    [data-testid="stDownloadButton"] button p,
     label {
-        color: #000000 !important;
+        color: #000000 !important; /* Preto absoluto */
+        -webkit-text-fill-color: #000000 !important; /* Força preenchimento no Cloud */
         font-weight: 700 !important;
         font-size: 1rem !important;
-        line-height: normal !important; /* Deixa o navegador calcular o respiro */
+        line-height: 1.3 !important;
+        opacity: 1 !important;
         background-color: transparent !important;
-        overflow: visible !important; /* Impede o corte visual */
         text-decoration: none !important;
     }
 
-    /* 3. CARTÕES DE MÉTRICAS */
+    /* 4. CARTÕES DE MÉTRICAS */
     .custom-metric-card {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%);
-        border: none !important;
+        border: 1px solid #000000;
         border-radius: 8px;
         padding: 22px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.08);
@@ -179,7 +186,7 @@ with col5: criar_cartao("Extensão Total Única", f"{ext_km:.3f} km")
 with col6: criar_cartao("Custo Total por KM", fmt(c_km))
 
 # ==========================================
-# 7. MOTOR DO PDF (Preservando o que já funciona)
+# 7. MOTOR DO PDF (BytesIO para Cloud)
 # ==========================================
 class RelatorioPDF(FPDF):
     def header(self):
@@ -214,13 +221,16 @@ def gerar_pdf_final():
     pdf.ln(5)
     pdf.set_font("Arial", '', 10)
     m_list = [
-        ("Valor Contrato", fmt(v_contrato)), ("Medido P0", fmt(v_p0)), 
-        ("Reajuste", fmt(diff)), ("Total Reajustado", fmt(v_reaj)), 
-        ("Extensao (KM)", f"{ext_km:.3f} km"), ("Custo R$/KM", fmt(c_km))
+        ("Valor em referência ao Contrato ", fmt(v_contrato)), 
+        ("Valor em referência P0 ", fmt(v_p0)), 
+        ("Valor de Reajuste", fmt(diff)), 
+        ("Valor Final Reajustado", fmt(v_reaj)), 
+        ("Extensao (KM)", f"{ext_km:.3f} km"), 
+        ("Valor R$/KM", fmt(c_km))
     ]
     for n, v in m_list:
-        pdf.cell(70, 10, n.encode('latin-1', 'replace').decode('latin-1'), 1)
-        pdf.cell(110, 10, v.encode('latin-1', 'replace').decode('latin-1'), 1)
+        pdf.cell(60, 10, n.encode('latin-1', 'replace').decode('latin-1'), 1)
+        pdf.cell(120, 10, v.encode('latin-1', 'replace').decode('latin-1'), 1)
         pdf.ln()
     
     output = pdf.output(dest='S')
