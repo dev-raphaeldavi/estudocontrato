@@ -3,14 +3,14 @@ import pandas as pd
 from fpdf import FPDF
 import os
 from datetime import datetime
-import io  # ESSENCIAL: Resolve o erro de bytes/mime no Cloud
+import io
 
 # ==========================================
 # 1. CONFIGURAÇÕES DA PÁGINA E ESTILIZAÇÃO
 # ==========================================
 st.set_page_config(page_title="ESTUDO DE CONTRATO", layout="wide", initial_sidebar_state="expanded")
 
-# CSS PADRONIZADO: Visibilidade total, degradê, sem cortes e com bordas pretas nos botões
+# CSS "LIMPEZA TOTAL": Sem bordas e com texto centralizado sem cortes
 st.markdown("""
     <style>
     /* 1. Reset de Interface */
@@ -21,53 +21,54 @@ st.markdown("""
     
     .stApp h1 { color: #0f172a !important; font-weight: 800 !important; margin-top: -20px !important; }
 
-    /* 2. DESIGN UNIFICADO: Botões (Processar, Baixar) e Seletores (WBS, Local, Ano) */
-    /* Alvo: WBS, Local e Ano - Mantemos nítido e sem bordinha residual clara */
-    [data-testid="stMultiSelect"] div,
-    [data-testid="stMultiSelect"] [data-baseweb="select"],
+    /* 2. REMOÇÃO DE BORDAS E AJUSTE DE ALTURA (Filtros e Botões) */
+    /* Alvo: O seletor inteiro e suas subcamadas */
+    [data-testid="stMultiSelect"], 
+    [data-testid="stMultiSelect"] > div, 
+    [data-testid="stMultiSelect"] div[data-baseweb="select"],
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
         border: none !important;
         outline: none !important;
         box-shadow: none !important;
+        border-color: transparent !important;
     }
 
-    /* Aplica o degradê e garante altura para o texto não ser esmagado */
+    /* Aplica o degradê e libera o espaço para o texto não ser esmagado */
     div[data-baseweb="select"] > div,
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%) !important;
         border-radius: 6px !important;
-        min-height: 55px !important;
+        min-height: 52px !important; /* Altura garantida para o texto */
         height: auto !important;
-        padding: 5px 12px !important;
+        padding: 5px 15px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        
-        /* --- AJUSTE SOLICITADO: BORDINHA PRETA PADRONIZADA --- */
-        border: 1px solid #000000 !important; 
     }
 
-    /* FORÇA O TEXTO A FICAR PRETO E VISÍVEL (Sem cortes/bugados) */
+    /* FORÇA O TEXTO A APARECER INTEIRO (Preto e nítido) */
+    /* Target específico para o texto "Geral" e seleções */
+    [data-testid="stMultiSelect"] span,
+    [data-testid="stMultiSelect"] div,
+    div[data-baseweb="select"] *,
     [data-testid="stFormSubmitButton"] button p, 
     [data-testid="stDownloadButton"] button p,
-    div[data-baseweb="select"] span,
-    div[data-baseweb="select"] div,
     label {
-        color: #000000 !important; /* Preto absoluto */
+        color: #000000 !important;
         font-weight: 700 !important;
         font-size: 1rem !important;
-        line-height: 1.3 !important; /* Respiro vertical */
+        line-height: normal !important; /* Deixa o navegador calcular o respiro */
         background-color: transparent !important;
-        margin: 0 !important;
-        padding: 0 !important;
+        overflow: visible !important; /* Impede o corte visual */
+        text-decoration: none !important;
     }
 
     /* 3. CARTÕES DE MÉTRICAS */
     .custom-metric-card {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%);
-        border: 1px solid #38bdf8;
+        border: none !important;
         border-radius: 8px;
         padding: 22px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.08);
@@ -178,7 +179,7 @@ with col5: criar_cartao("Extensão Total Única", f"{ext_km:.3f} km")
 with col6: criar_cartao("Custo Total por KM", fmt(c_km))
 
 # ==========================================
-# 7. MOTOR DO PDF (Usando io.BytesIO para Cloud)
+# 7. MOTOR DO PDF (Preservando o que já funciona)
 # ==========================================
 class RelatorioPDF(FPDF):
     def header(self):
@@ -194,7 +195,6 @@ def gerar_pdf_final():
     pdf.set_margins(15, 15, 15)
     pdf.add_page()
     
-    # Identificação da Pesquisa
     pdf.set_font("Arial", 'B', 11)
     pdf.cell(180, 10, "IDENTIFICACAO DA PESQUISA:", 0, 1)
     pdf.set_font("Arial", '', 10)
@@ -208,32 +208,26 @@ def gerar_pdf_final():
     pdf.cell(180, 7, a_t.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
     pdf.ln(5)
     
-    # Tabela de Métricas
     pdf.set_font("Arial", 'B', 12)
     pdf.set_fill_color(240, 240, 240)
     pdf.cell(180, 10, "METRICAS CONSOLIDADAS", 0, 1, fill=True)
     pdf.ln(5)
     pdf.set_font("Arial", '', 10)
     m_list = [
-        ("Valor em referência ao Contrato ", fmt(v_contrato)), 
-        ("Valor em referência P0 ", fmt(v_p0)), 
-        ("Valor de Reajuste", fmt(diff)), 
-        ("Valor Final Reajustado", fmt(v_reaj)), 
-        ("Extensao (KM)", f"{ext_km:.3f} km"), 
-        ("Valor R$/KM", fmt(c_km))
+        ("Valor Contrato", fmt(v_contrato)), ("Medido P0", fmt(v_p0)), 
+        ("Reajuste", fmt(diff)), ("Total Reajustado", fmt(v_reaj)), 
+        ("Extensao (KM)", f"{ext_km:.3f} km"), ("Custo R$/KM", fmt(c_km))
     ]
     for n, v in m_list:
-        pdf.cell(60, 10, n.encode('latin-1', 'replace').decode('latin-1'), 1)
-        pdf.cell(120, 10, v.encode('latin-1', 'replace').decode('latin-1'), 1)
+        pdf.cell(70, 10, n.encode('latin-1', 'replace').decode('latin-1'), 1)
+        pdf.cell(110, 10, v.encode('latin-1', 'replace').decode('latin-1'), 1)
         pdf.ln()
     
-    # RETORNO EM BYTES PUROS (O segredo para o Streamlit Cloud)
     output = pdf.output(dest='S')
     if isinstance(output, str):
         return io.BytesIO(output.encode('latin-1'))
     return io.BytesIO(output)
 
-# Nome dinâmico
 nome_pdf = f"relatorio_{'_'.join(wbs_sel)}.pdf" if wbs_sel else "relatorio_geral.pdf"
 
 st.sidebar.markdown("---")
