@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from fpdf import FPDF
 import os
-from datetime import datetime
+from datetime import datetime, timedelta, timezone # Importação ajustada para fuso
 import io
 
 # ==========================================
@@ -10,26 +10,22 @@ import io
 # ==========================================
 st.set_page_config(page_title="ESTUDO DE CONTRATO", layout="wide", initial_sidebar_state="expanded")
 
-# CSS "RESPIRO TOTAL": Foca no alinhamento vertical para o texto não esmagar
 st.markdown("""
     <style>
-    /* 1. Reset de Interface */
     [data-testid="stHeader"] { background-color: transparent !important; }
     [data-testid="stMainMenu"], .stDeployButton { display: none !important; }
     [data-testid="collapsedControl"] * { color: #0f172a !important; }
     .stApp, [data-testid="stSidebar"] { background-color: #FFFFFF !important; }
     
     .stApp h1 { color: #0f172a !important; font-weight: 800 !important; margin-top: -20px !important; }
-    
-    /* Texto da Sidebar (Filtros de Pesquisa) */
+
     [data-testid="stSidebar"] h3, [data-testid="stSidebar"] .stMarkdown p {
         color: #000000 !important; font-weight: 800 !important;
     }
 
-    /* 2. SOLUÇÃO PARA O ESMAGAMENTO (image_7fa541.png) */
-    /* Limpamos bordas internas indesejadas */
     [data-testid="stMultiSelect"] div,
     [data-testid="stMultiSelect"] [data-baseweb="select"],
+    [data-testid="stMultiSelect"] [data-baseweb="select"] > div,
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
         border: none !important;
@@ -37,25 +33,20 @@ st.markdown("""
         box-shadow: none !important;
     }
 
-    /* Aplicamos o design com PADRÃO DE ALTURA E BORDA PRETA */
     [data-testid="stMultiSelect"] [data-baseweb="select"] > div,
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%) !important;
         border-radius: 6px !important;
-        border: 1px solid #000000 !important; /* Bordinha preta aprovada */
-        
-        /* O AJUSTE: Altura mínima generosa e padding vertical forçado */
+        border: 1px solid #000000 !important; 
         min-height: 60px !important;
         height: auto !important;
         padding: 8px 15px !important; 
-        
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
     }
 
-    /* FORÇA O TEXTO A NÃO SER CORTADO (Preto e Centralizado) */
     [data-testid="stFormSubmitButton"] button p, 
     [data-testid="stDownloadButton"] button p,
     [data-testid="stMultiSelect"] span,
@@ -66,18 +57,14 @@ st.markdown("""
         -webkit-text-fill-color: #000000 !important;
         font-weight: 700 !important;
         font-size: 1rem !important;
-        
-        /* O SEGREDO: line-height de respiro e remoção de margens que esmagam */
         line-height: 1.6 !important; 
         margin: 0 !important;
         padding: 0 !important;
-        
         background-color: transparent !important;
         overflow: visible !important;
         text-decoration: none !important;
     }
 
-    /* 3. CARTÕES DE MÉTRICAS */
     .custom-metric-card {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%);
         border: 1px solid #000000;
@@ -191,16 +178,21 @@ with col5: criar_cartao("Extensão Total Única", f"{ext_km:.3f} km")
 with col6: criar_cartao("Custo Total por KM", fmt(c_km))
 
 # ==========================================
-# 7. MOTOR DO PDF (BytesIO para Cloud)
+# 7. MOTOR DO PDF
 # ==========================================
 class RelatorioPDF(FPDF):
     def header(self):
         if tem_logo: self.image(caminho_logo, 10, 8, 35)
         self.set_xy(50, 15); self.set_font('Arial', 'B', 14)
         self.cell(150, 10, 'ESTUDO DE CONTRATO - RELATORIO GERENCIAL', 0, 1, 'L'); self.ln(10)
+    
     def footer(self):
+        # AJUSTE DO FUSO HORÁRIO (UTC-3)
+        fuso_br = timezone(timedelta(hours=-3))
+        data_hora_br = datetime.now(fuso_br).strftime("%d/%m/%Y %H:%M")
+        
         self.set_y(-15); self.set_font('Arial', 'I', 8)
-        self.cell(0, 10, f'Impresso em: {datetime.now().strftime("%d/%m/%Y %H:%M")} | Pagina {self.page_no()}', 0, 0, 'C')
+        self.cell(0, 10, f'Impresso em: {data_hora_br} | Pagina {self.page_no()}', 0, 0, 'C')
 
 def gerar_pdf_final():
     pdf = RelatorioPDF()
