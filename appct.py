@@ -3,14 +3,14 @@ import pandas as pd
 from fpdf import FPDF
 import os
 from datetime import datetime
-import io  # ESSENCIAL: Resolve o erro de bytes/mime no Cloud
+import io
 
 # ==========================================
 # 1. CONFIGURAÇÕES DA PÁGINA E ESTILIZAÇÃO
 # ==========================================
 st.set_page_config(page_title="ESTUDO DE CONTRATO", layout="wide", initial_sidebar_state="expanded")
 
-# CSS NUCLEAR: Resolve o sumiço de texto e ELIMINA A BORDA DUPLA
+# CSS BLINDADO: Resolve o esmagamento, mantém borda única e visibilidade total
 st.markdown("""
     <style>
     /* 1. Reset de Interface */
@@ -21,15 +21,12 @@ st.markdown("""
     
     .stApp h1 { color: #0f172a !important; font-weight: 800 !important; margin-top: -20px !important; }
 
-    /* 2. ELIMINAÇÃO ABSOLUTA DA BORDA DUPLA (O segredo paraimage_801d9c.png) */
-    /* Atacamos o componente, suas divisões internas e o estado de foco simulado (BaseWeb) */
-    
-    /* Etapa 1: Remover TUDO de todos os níveis */
+    /* 2. FIM DO ESMAGAMENTO E BORDA DUPLA */
+    /* Removemos as bordas de todas as camadas inferiores primeiro */
     [data-testid="stMultiSelect"] div,
     [data-testid="stMultiSelect"] [data-baseweb="select"],
     [data-testid="stMultiSelect"] [data-baseweb="select"] > div,
     div[role="combobox"],
-    div[data-baseweb="select"] *:focus,
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
         border: none !important;
@@ -38,38 +35,44 @@ st.markdown("""
         border-color: transparent !important;
     }
 
-    /* Etapa 2: Aplicar degradê e a ÚNICA BORDA PRETA permitida no elemento correto */
-    [data-testid="stMultiSelect"] [data-baseweb="select"] > div, /* O contêiner visual real do select */
+    /* Aplicamos o design no nível correto para evitar a bordinha interna */
+    [data-testid="stMultiSelect"] [data-baseweb="select"] > div,
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%) !important;
         border-radius: 6px !important;
-        min-height: 52px !important;
+        min-height: 58px !important; /* Altura aumentada para não esmagar */
         height: auto !important;
-        padding: 5px 15px !important;
+        padding: 2px 15px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         
-        /* --- ESTA É A ÚNICA BORDINHA PRETA QUE FICA --- */
+        /* ÚNICA BORDINHA PRETA */
         border: 1px solid #000000 !important; 
     }
 
-    /* 3. FORÇA O TEXTO A FICAR PRETO (Fim dos nomes desaparecidos/bugados) */
+    /* 3. FORÇA O TEXTO A RESPIRAR (Resolve image_801656.png) */
+    /* Target cirúrgico nos textos que estão sendo esmagados */
     [data-testid="stFormSubmitButton"] button p, 
     [data-testid="stDownloadButton"] button p,
     [data-testid="stMultiSelect"] span,
     [data-testid="stMultiSelect"] div,
     div[data-baseweb="select"] *,
     label {
-        color: #000000 !important; /* Preto absoluto */
-        -webkit-text-fill-color: #000000 !important; /* Força preenchimento no Cloud */
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
         font-weight: 700 !important;
         font-size: 1rem !important;
-        line-height: 1.3 !important;
-        opacity: 1 !important;
+        
+        /* O segredo contra o esmagamento: line-height e margin reset */
+        line-height: 1.6 !important; 
+        margin: 0 !important;
+        padding: 0 !important;
+        
         background-color: transparent !important;
         text-decoration: none !important;
+        overflow: visible !important;
     }
 
     /* 4. CARTÕES DE MÉTRICAS */
@@ -186,7 +189,7 @@ with col5: criar_cartao("Extensão Total Única", f"{ext_km:.3f} km")
 with col6: criar_cartao("Custo Total por KM", fmt(c_km))
 
 # ==========================================
-# 7. MOTOR DO PDF (BytesIO para Cloud)
+# 7. MOTOR DO PDF
 # ==========================================
 class RelatorioPDF(FPDF):
     def header(self):
