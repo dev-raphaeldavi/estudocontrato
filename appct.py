@@ -10,55 +10,50 @@ import io
 # ==========================================
 st.set_page_config(page_title="ESTUDO DE CONTRATO", layout="wide", initial_sidebar_state="expanded")
 
-# CSS REFORÇADO: Garante visibilidade total e botões sem cortes
+# CSS REFORÇADO: Blindagem contra cortes e fontes invisíveis
 st.markdown("""
     <style>
-    /* Força visibilidade do cabeçalho e título principal */
+    /* 1. Visibilidade do Título e Header */
     [data-testid="stHeader"] { background-color: transparent !important; }
     [data-testid="stMainMenu"], .stDeployButton { display: none !important; }
     [data-testid="collapsedControl"] * { color: #0f172a !important; }
     
-    .stApp h1, .stApp h2, .stApp h3 {
-        color: #0f172a !important;
-        font-weight: 800 !important;
-    }
-
-    .block-container { padding-top: 2rem !important; }
+    .stApp h1 { color: #0f172a !important; font-weight: 800 !important; }
     .stApp, [data-testid="stSidebar"] { background-color: #FFFFFF !important; }
 
-    /* Estilização Unificada: Selectores e Botões */
+    /* 2. SOLUÇÃO DEFINITIVA PARA CORTE DE TEXTO (BOTÕES E FILTROS) */
     div[data-baseweb="select"] > div, 
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%) !important;
         border: 1px solid #38bdf8 !important;
         border-radius: 6px !important;
+        
+        /* Força a expansão vertical para não cortar o nome */
         min-height: 55px !important;
-        padding: 5px 15px !important;
-        cursor: pointer !important;
-        transition: all 0.3s ease !important;
-        width: 100% !important;
+        height: auto !important;
+        padding: 10px !important;
+        
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        white-space: normal !important;
-        text-align: center !important;
-        overflow: visible !important;
+        flex-wrap: wrap !important; /* Permite que o texto mude de linha */
     }
 
-    /* Força texto ESCURO dentro de tudo que for azul */
+    /* Estilo do Texto Interno */
     [data-testid="stFormSubmitButton"] button p, 
     [data-testid="stDownloadButton"] button p,
     div[data-baseweb="select"] div,
     span[data-baseweb="tag"],
-    label {
+    label, .stMarkdown p {
         color: #0f172a !important;
         font-weight: 700 !important;
         font-size: 1rem !important;
+        line-height: 1.2 !important;
         background-color: transparent !important;
     }
 
-    /* Cartões de Métricas */
+    /* 3. CARTÕES DE MÉTRICAS */
     .custom-metric-card {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%);
         border: 1px solid #38bdf8;
@@ -68,7 +63,7 @@ st.markdown("""
         text-align: left;
         margin-bottom: 1.2rem;
     }
-    .custom-metric-title { color: #0f172a; font-weight: 700; font-size: 0.95rem; text-transform: uppercase; margin-bottom: 8px; }
+    .custom-metric-title { color: #0f172a; font-weight: 700; font-size: 0.95rem; text-transform: uppercase; }
     .custom-metric-value { color: #014c8c; font-size: 2rem; font-weight: 800; }
 
     [data-testid="stForm"] { border: none !important; padding: 0 !important; }
@@ -126,9 +121,9 @@ wbs_sel, locais_sel, anos_sel = [], [], []
 if not df.empty:
     with st.sidebar.form("form_pesquisa"):
         st.markdown("### Filtros de Pesquisa")
-        wbs_sel = st.multiselect("Estrutura (WBS):", options=sorted(df['WBS'].unique()), placeholder="Deixe em branco p/ geral")
-        locais_sel = st.multiselect("Local Aplicado:", options=sorted(df['LOCAL APLICADO'].unique()), placeholder="Deixe em branco p/ geral")
-        anos_sel = st.multiselect("Ano do Contrato:", options=sorted(df['ANO DO CONTRATO'].unique()), placeholder="Deixe em branco p/ geral")
+        wbs_sel = st.multiselect("Estrutura (WBS):", options=sorted(df['WBS'].unique()), placeholder="Geral")
+        locais_sel = st.multiselect("Local Aplicado:", options=sorted(df['LOCAL APLICADO'].unique()), placeholder="Geral")
+        anos_sel = st.multiselect("Ano do Contrato:", options=sorted(df['ANO DO CONTRATO'].unique()), placeholder="Geral")
         st.form_submit_button("Processar Dados")
 
     if wbs_sel: df_filtrado = df_filtrado[df_filtrado['WBS'].isin(wbs_sel)]
@@ -136,7 +131,7 @@ if not df.empty:
     if anos_sel: df_filtrado = df_filtrado[df_filtrado['ANO DO CONTRATO'].isin(anos_sel)]
 
 # ==========================================
-# 5. CÁLCULOS TÉCNICOS
+# 5. CÁLCULOS
 # ==========================================
 v_contrato = df_filtrado['VALOR DO CONTRATO'].sum()
 v_p0 = df_filtrado['MEDIDO P0'].sum()
@@ -159,7 +154,6 @@ def fmt(v): return f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X
 # ==========================================
 if tem_logo: st.image(caminho_logo, width=210)
 st.title("ESTUDO DE CONTRATO")
-st.markdown("Visão Gerencial Físico-Financeira")
 st.markdown("---")
 
 col1, col2, col3 = st.columns(3)
@@ -173,36 +167,39 @@ with col5: criar_cartao("Extensão Total Única", f"{ext_km:.3f} km")
 with col6: criar_cartao("Custo Total por KM", fmt(c_km))
 
 # ==========================================
-# 7. MOTOR DO PDF (Buffer de Memória para Cloud)
+# 7. MOTOR DO PDF (FIX: RESOLVENDO ERRO DE ESPAÇO)
 # ==========================================
 class RelatorioPDF(FPDF):
     def header(self):
-        if tem_logo: self.image(caminho_logo, 10, 8, 40)
-        self.set_xy(55, 15); self.set_font('Arial', 'B', 14)
-        self.cell(0, 10, 'ESTUDO DE CONTRATO - RELATORIO GERENCIAL', 0, 1, 'L'); self.ln(20)
+        if tem_logo: self.image(caminho_logo, 10, 8, 35)
+        self.set_xy(50, 15); self.set_font('Arial', 'B', 14)
+        self.cell(0, 10, 'ESTUDO DE CONTRATO - RELATORIO GERENCIAL', 0, 1, 'L'); self.ln(15)
     def footer(self):
         self.set_y(-15); self.set_font('Arial', 'I', 8)
         self.cell(0, 10, f'Impresso em: {datetime.now().strftime("%d/%m/%Y %H:%M")} | Pagina {self.page_no()}', 0, 0, 'C')
 
 def gerar_pdf_final():
     pdf = RelatorioPDF()
+    pdf.set_margins(15, 15, 15) # Fixando margens para evitar erro de espaço
     pdf.add_page()
+    
     pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 10, "IDENTIFICAÇÃO DA PESQUISA:", 0, 1)
+    pdf.cell(180, 10, "IDENTIFICAÇÃO DA PESQUISA:", 0, 1)
     pdf.set_font("Arial", '', 10)
     
-    txt_wbs = f"WBS: {', '.join(wbs_sel)}" if wbs_sel else "WBS: Geral"
-    txt_loc = f"Local Aplicado: {', '.join(locais_sel)}" if locais_sel else "Local Aplicado: Geral"
-    txt_ano = f"Ano do Contrato: {', '.join(anos_sel)}" if anos_sel else "Ano do Contrato: Geral"
+    # Substituindo multi_cell problemático por cell com quebra manual controlada
+    wbs_txt = f"WBS: {', '.join(wbs_sel)}" if wbs_sel else "WBS: Geral"
+    loc_txt = f"Local Aplicado: {', '.join(locais_sel)}" if locais_sel else "Local Aplicado: Geral"
+    ano_txt = f"Ano do Contrato: {', '.join(anos_sel)}" if anos_sel else "Ano do Contrato: Geral"
     
-    pdf.multi_cell(0, 6, txt_wbs.encode('latin-1', 'replace').decode('latin-1'))
-    pdf.multi_cell(0, 6, txt_loc.encode('latin-1', 'replace').decode('latin-1'))
-    pdf.multi_cell(0, 6, txt_ano.encode('latin-1', 'replace').decode('latin-1'))
+    pdf.cell(180, 7, wbs_txt.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
+    pdf.cell(180, 7, loc_txt.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
+    pdf.cell(180, 7, ano_txt.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
     pdf.ln(5)
     
     pdf.set_font("Arial", 'B', 12)
     pdf.set_fill_color(240, 240, 240)
-    pdf.cell(0, 10, "METRICAS CONSOLIDADAS", 0, 1, fill=True)
+    pdf.cell(180, 10, "METRICAS CONSOLIDADAS", 0, 1, fill=True)
     pdf.ln(5)
     pdf.set_font("Arial", '', 10)
     m_list = [
@@ -211,9 +208,8 @@ def gerar_pdf_final():
         ("Extensao (KM)", f"{ext_km:.3f} km"), ("Custo R$/KM", fmt(c_km))
     ]
     for n, v in m_list:
-        pdf.cell(60, 10, n, 1); pdf.cell(130, 10, v, 1); pdf.ln()
+        pdf.cell(60, 10, n, 1); pdf.cell(120, 10, v, 1); pdf.ln()
     
-    # Retorna buffer de bytes para o Streamlit Cloud
     return pdf.output(dest='S').encode('latin-1')
 
 nome_pdf = f"relatorio_{'_'.join(wbs_sel)}.pdf" if wbs_sel else "relatorio_geral.pdf"
