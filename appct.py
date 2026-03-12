@@ -10,34 +10,31 @@ import io
 # ==========================================
 st.set_page_config(page_title="ESTUDO DE CONTRATO", layout="wide", initial_sidebar_state="expanded")
 
-# CSS BLINDADO: Garante visibilidade do texto, remove bordas e impede achatamento
+# CSS "ZERO BORDA": Remove bordas, sombras e contornos de todas as camadas
 st.markdown("""
     <style>
-    /* 1. Visibilidade do Título e Topo */
+    /* 1. Reset de Cores de Fundo */
     [data-testid="stHeader"] { background-color: transparent !important; }
     [data-testid="stMainMenu"], .stDeployButton { display: none !important; }
     [data-testid="collapsedControl"] * { color: #0f172a !important; }
-    
-    .stApp h1 { 
-        color: #0f172a !important; 
-        font-weight: 800 !important; 
-        margin-top: -20px !important;
-    }
-    
     .stApp, [data-testid="stSidebar"] { background-color: #FFFFFF !important; }
+    
+    .stApp h1 { color: #0f172a !important; font-weight: 800 !important; margin-top: -20px !important; }
 
-    /* 2. REMOÇÃO DE BORDAS E AJUSTE DE CORES (Selectores e Botões) */
-    /* Removemos as bordas de todas as camadas do seletor */
-    [data-testid="stMultiSelect"] > div,
+    /* 2. REMOÇÃO TOTAL DA BORDINHA PRETA (Botões e Filtros) */
+    /* Atacamos o componente inteiro e suas divisões internas */
+    [data-testid="stMultiSelect"], 
+    [data-testid="stMultiSelect"] > div, 
     [data-testid="stMultiSelect"] div[data-baseweb="select"],
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
         border: none !important;
         outline: none !important;
         box-shadow: none !important;
+        border-color: transparent !important;
     }
 
-    /* Aplica o degradê e garante altura para o texto aparecer */
+    /* Aplica o degradê sem nenhuma borda residual */
     div[data-baseweb="select"] > div,
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
@@ -48,21 +45,22 @@ st.markdown("""
         padding: 5px 12px !important;
         display: flex !important;
         align-items: center !important;
+        justify-content: center !important;
+        border: 0px solid transparent !important; /* Reforço zero */
     }
 
-    /* FORÇA O TEXTO A FICAR PRETO E VISÍVEL (Resolve o sumiço do 'Geral') */
-    /* Atacamos o placeholder e o texto selecionado especificamente */
-    [data-testid="stMultiSelect"] span,
-    [data-testid="stMultiSelect"] div,
-    [data-testid="stMultiSelect"] p,
-    div[data-baseweb="select"] *, 
-    label, .stMarkdown p {
-        color: #000000 !important; /* Preto absoluto para contraste total */
+    /* FORÇA O TEXTO PRETO (Garante visibilidade e alinhamento) */
+    [data-testid="stFormSubmitButton"] button p, 
+    [data-testid="stDownloadButton"] button p,
+    div[data-baseweb="select"] span,
+    div[data-baseweb="select"] div,
+    label {
+        color: #000000 !important;
         font-weight: 700 !important;
         font-size: 1rem !important;
-        line-height: 1.5 !important;
+        line-height: 1.4 !important;
         background-color: transparent !important;
-        opacity: 1 !important;
+        margin: 0 !important;
     }
 
     /* 3. CARTÕES DE MÉTRICAS */
