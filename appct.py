@@ -3,7 +3,7 @@ import pandas as pd
 from fpdf import FPDF
 import os
 from datetime import datetime
-import io  # ESSENCIAL para o funcionamento online
+import io # Necessário para converter o PDF para o formato que o servidor aceita
 
 # ==========================================
 # 1. CONFIGURAÇÕES DA PÁGINA E ESTILIZAÇÃO
@@ -18,7 +18,7 @@ st.markdown("""
     [data-testid="stMainMenu"], .stDeployButton { display: none !important; }
     [data-testid="collapsedControl"] * { color: #0f172a !important; }
     
-    /* Força a cor do Título Principal */
+    /* Força a cor do Título Principal que estava sumindo */
     .stApp h1 {
         color: #0f172a !important;
         font-weight: 800 !important;
@@ -28,7 +28,8 @@ st.markdown("""
     .block-container { padding-top: 2rem !important; }
     .stApp, [data-testid="stSidebar"] { background-color: #FFFFFF !important; }
 
-    /* 2. SOLUÇÃO PARA NOMES CORTADOS (BOTÕES E FILTROS) */
+    /* 2. SOLUÇÃO DEFINITIVA PARA NOMES CORTADOS (BOTÕES E FILTROS) */
+    /* Atacamos o container interno do Streamlit para forçar a altura */
     div[data-baseweb="select"] > div, 
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
@@ -36,8 +37,8 @@ st.markdown("""
         border: 1px solid #38bdf8 !important;
         border-radius: 6px !important;
         
-        /* Remove travas de altura e permite que o botão cresça para baixo */
-        min-height: 55px !important;
+        /* Removemos as travas de altura e permitimos que o botão cresça */
+        min-height: 58px !important;
         height: auto !important;
         padding: 10px 15px !important;
         
@@ -49,7 +50,7 @@ st.markdown("""
         overflow: visible !important;
     }
     
-    /* Força texto ESCURO e visível dentro de tudo que for azul */
+    /* Força texto ESCURO e CENTRALIZADO (Acaba com os nomes bugados/claros) */
     [data-testid="stFormSubmitButton"] button p, 
     [data-testid="stDownloadButton"] button p,
     div[data-baseweb="select"] div,
@@ -58,8 +59,9 @@ st.markdown("""
         color: #0f172a !important;
         font-weight: 700 !important;
         font-size: 1rem !important;
-        line-height: 1.2 !important;
+        line-height: 1.2 !important; /* Resolve o corte vertical do texto */
         background-color: transparent !important;
+        margin: 0 !important;
     }
 
     /* 3. CARTÕES DE MÉTRICAS */
@@ -72,7 +74,7 @@ st.markdown("""
         text-align: left;
         margin-bottom: 1.2rem;
     }
-    .custom-metric-title { color: #0f172a; font-weight: 700; font-size: 0.95rem; text-transform: uppercase; }
+    .custom-metric-title { color: #0f172a; font-weight: 700; font-size: 0.95rem; text-transform: uppercase; margin-bottom: 8px; }
     .custom-metric-value { color: #014c8c; font-size: 2rem; font-weight: 800; }
 
     [data-testid="stForm"] { border: none !important; padding: 0 !important; }
@@ -176,7 +178,7 @@ with col5: criar_cartao("Extensão Total Única", f"{ext_km:.3f} km")
 with col6: criar_cartao("Custo Total por KM", fmt(c_km))
 
 # ==========================================
-# 7. MOTOR DO PDF (BLINDADO CONTRA ERROS DE BYTES)
+# 7. MOTOR DO PDF (CORREÇÃO PARA AMBIENTE ONLINE)
 # ==========================================
 class RelatorioPDF(FPDF):
     def header(self):
@@ -192,6 +194,7 @@ def gerar_pdf_final():
     pdf.set_margins(15, 15, 15)
     pdf.add_page()
     
+    # Identificação da Pesquisa no PDF
     pdf.set_font("Arial", 'B', 11)
     pdf.cell(180, 10, "IDENTIFICACAO DA PESQUISA:", 0, 1)
     pdf.set_font("Arial", '', 10)
@@ -211,22 +214,37 @@ def gerar_pdf_final():
     pdf.ln(5)
     pdf.set_font("Arial", '', 10)
     m_list = [
-        ("Valor Contrato", fmt(v_contrato)), ("Medido P0", fmt(v_p0)), 
-        ("Reajuste", fmt(diff)), ("Total Reajustado", fmt(v_reaj)), 
-        ("Extensao (KM)", f"{ext_km:.3f} km"), ("Custo R$/KM", fmt(c_km))
+        ("Valor em referência ao Contrato ", fmt(v_contrato)), 
+        ("Valor em referência P0 ", fmt(v_p0)), 
+        ("Valor de Reajuste", fmt(diff)), 
+        ("Valor Final Reajustado", fmt(v_reaj)), 
+        ("Extensao (KM)", f"{ext_km:.3f} km"), 
+        ("Valor R$/KM", fmt(c_km))
     ]
     for n, v in m_list:
-        pdf.cell(60, 10, n, 1); pdf.cell(120, 10, v, 1); pdf.ln()
+        pdf.cell(60, 10, n.encode('latin-1', 'replace').decode('latin-1'), 1)
+        pdf.cell(120, 10, v.encode('latin-1', 'replace').decode('latin-1'), 1)
+        pdf.ln()
     
-    # SOLUÇÃO FINAL PARA O CLOUD: Saída direta em Bytes
-    return pdf.output()
+    # --- O PONTO CRÍTICO: Conversão para bytes aceitos pelo Cloud ---
+    try:
+        # Tenta extrair como bytes (Padrão fpdf2 / Cloud)
+        pdf_bytes = pdf.output()
+        if isinstance(pdf_bytes, (bytes, bytearray)):
+            return pdf_bytes
+        # Se retornar string (Padrão fpdf antigo / Local), codifica
+        return pdf_bytes.encode('latin-1')
+    except Exception:
+        # Último recurso: Buffer de memória
+        return pdf.output(dest='S').encode('latin-1')
 
+# Nome dinâmico
 nome_pdf = f"relatorio_{'_'.join(wbs_sel)}.pdf" if wbs_sel else "relatorio_geral.pdf"
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📄 Relatórios")
 
-# Captura os dados do PDF
+# Chamada da função garantindo o formato correto
 pdf_data = gerar_pdf_final()
 
 st.sidebar.download_button(
