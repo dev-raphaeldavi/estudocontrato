@@ -10,10 +10,10 @@ import io
 # ==========================================
 st.set_page_config(page_title="ESTUDO DE CONTRATO", layout="wide", initial_sidebar_state="expanded")
 
-# CSS "VISIBILIDADE TOTAL": Resolve o texto dos filtros e mantém o padrão de bordas
+# CSS ANTI-ESMAGAMENTO: Resolve visibilidade, bordas e garante respiro vertical
 st.markdown("""
     <style>
-    /* 1. Reset de Interface */
+    /* 1. Reset de Interface e Título Principal */
     [data-testid="stHeader"] { background-color: transparent !important; }
     [data-testid="stMainMenu"], .stDeployButton { display: none !important; }
     [data-testid="collapsedControl"] * { color: #0f172a !important; }
@@ -21,7 +21,7 @@ st.markdown("""
     
     .stApp h1 { color: #0f172a !important; font-weight: 800 !important; margin-top: -20px !important; }
 
-    /* --- AJUSTE SOLICITADO: TEXTO 'FILTROS DE PESQUISA' EM PRETO NEGRITO --- */
+    /* --- AJUSTE: TEXTO 'FILTROS DE PESQUISA' EM PRETO NEGRITO --- */
     [data-testid="stSidebar"] h3, 
     [data-testid="stSidebar"] .stMarkdown p {
         color: #000000 !important;
@@ -29,7 +29,8 @@ st.markdown("""
         opacity: 1 !important;
     }
 
-    /* 2. DESIGN DOS BOTÕES E SELETORES (Com borda preta padronizada) */
+    /* 2. DESIGN UNIFICADO CONTRA ESMAGAMENTO (Filtros e Botões) */
+    /* Removemos as bordas de todas as subcamadas */
     [data-testid="stMultiSelect"] div,
     [data-testid="stMultiSelect"] [data-baseweb="select"],
     [data-testid="stMultiSelect"] [data-baseweb="select"] > div,
@@ -40,21 +41,28 @@ st.markdown("""
         box-shadow: none !important;
     }
 
+    /* O SEGREDO: min-height maior + padding vertical fixo */
     [data-testid="stMultiSelect"] [data-baseweb="select"] > div,
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%) !important;
         border-radius: 6px !important;
-        min-height: 55px !important;
+        
+        /* Força o respiro vertical para não esmagar o texto */
+        min-height: 60px !important; 
         height: auto !important;
-        padding: 5px 15px !important;
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+        padding-left: 15px !important;
+        padding-right: 15px !important;
+        
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        border: 1px solid #000000 !important; 
+        border: 1px solid #000000 !important; /* Bordinha preta padronizada */
     }
 
-    /* 3. FORÇA O TEXTO INTERNO A FICAR PRETO (Fim do sumiço no online) */
+    /* 3. VISIBILIDADE DO TEXTO (Preto Absoluto) */
     [data-testid="stFormSubmitButton"] button p, 
     [data-testid="stDownloadButton"] button p,
     [data-testid="stMultiSelect"] span,
@@ -65,9 +73,9 @@ st.markdown("""
         -webkit-text-fill-color: #000000 !important;
         font-weight: 700 !important;
         font-size: 1rem !important;
-        line-height: 1.3 !important;
-        opacity: 1 !important;
+        line-height: 1.2 !important;
         background-color: transparent !important;
+        margin: 0 !important;
     }
 
     /* 4. CARTÕES DE MÉTRICAS */
@@ -80,7 +88,7 @@ st.markdown("""
         text-align: left;
         margin-bottom: 1.2rem;
     }
-    .custom-metric-title { color: #0f172a; font-weight: 700; font-size: 0.95rem; text-transform: uppercase; margin-bottom: 8px; }
+    .custom-metric-title { color: #0f172a; font-weight: 700; font-size: 0.95rem; text-transform: uppercase; }
     .custom-metric-value { color: #014c8c; font-size: 1.9rem; font-weight: 800; }
 
     [data-testid="stForm"] { border: none !important; padding: 0 !important; }
