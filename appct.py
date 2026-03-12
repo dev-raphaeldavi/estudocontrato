@@ -10,18 +10,23 @@ import io
 # ==========================================
 st.set_page_config(page_title="ESTUDO DE CONTRATO", layout="wide", initial_sidebar_state="expanded")
 
-# CSS REFORÇADO: Blindagem contra cortes e fontes invisíveis
+# CSS BLINDADO: Resolve cortes de texto e visibilidade invisível
 st.markdown("""
     <style>
-    /* 1. Visibilidade do Título e Header */
+    /* Força visibilidade do Título Principal e Labels */
     [data-testid="stHeader"] { background-color: transparent !important; }
     [data-testid="stMainMenu"], .stDeployButton { display: none !important; }
     [data-testid="collapsedControl"] * { color: #0f172a !important; }
     
-    .stApp h1 { color: #0f172a !important; font-weight: 800 !important; }
+    .stApp h1, .stApp h2, .stApp h3, .stApp p, label {
+        color: #0f172a !important;
+        font-weight: 700 !important;
+    }
+
+    .block-container { padding-top: 2rem !important; }
     .stApp, [data-testid="stSidebar"] { background-color: #FFFFFF !important; }
 
-    /* 2. SOLUÇÃO DEFINITIVA PARA CORTE DE TEXTO (BOTÕES E FILTROS) */
+    /* SOLUÇÃO DEFINITIVA PARA CORTE DE TEXTO NOS BOTÕES E SELETORES */
     div[data-baseweb="select"] > div, 
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
@@ -29,42 +34,43 @@ st.markdown("""
         border: 1px solid #38bdf8 !important;
         border-radius: 6px !important;
         
-        /* Força a expansão vertical para não cortar o nome */
-        min-height: 55px !important;
+        /* Permite que o botão cresça para baixo em vez de cortar o lado */
+        min-height: 52px !important;
         height: auto !important;
         padding: 10px !important;
         
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        flex-wrap: wrap !important; /* Permite que o texto mude de linha */
+        white-space: normal !important; 
+        text-align: center !important;
+        overflow: visible !important;
     }
-
-    /* Estilo do Texto Interno */
+    
+    /* Força texto ESCURO dentro dos botões (Resolve fonte clara) */
     [data-testid="stFormSubmitButton"] button p, 
     [data-testid="stDownloadButton"] button p,
     div[data-baseweb="select"] div,
-    span[data-baseweb="tag"],
-    label, .stMarkdown p {
+    span[data-baseweb="tag"] {
         color: #0f172a !important;
-        font-weight: 700 !important;
-        font-size: 1rem !important;
-        line-height: 1.2 !important;
+        font-weight: 800 !important;
+        font-size: 0.95rem !important;
+        line-height: 1.1 !important;
         background-color: transparent !important;
     }
 
-    /* 3. CARTÕES DE MÉTRICAS */
+    /* Cartões de Métricas */
     .custom-metric-card {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%);
         border: 1px solid #38bdf8;
-        border-radius: 8px;
-        padding: 22px;
+        border-radius: 6px;
+        padding: 20px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.08);
         text-align: left;
         margin-bottom: 1.2rem;
     }
-    .custom-metric-title { color: #0f172a; font-weight: 700; font-size: 0.95rem; text-transform: uppercase; }
-    .custom-metric-value { color: #014c8c; font-size: 2rem; font-weight: 800; }
+    .custom-metric-title { color: #0f172a; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 5px; }
+    .custom-metric-value { color: #014c8c; font-size: 1.8rem; font-weight: 800; }
 
     [data-testid="stForm"] { border: none !important; padding: 0 !important; }
     </style>
@@ -167,7 +173,7 @@ with col5: criar_cartao("Extensão Total Única", f"{ext_km:.3f} km")
 with col6: criar_cartao("Custo Total por KM", fmt(c_km))
 
 # ==========================================
-# 7. MOTOR DO PDF (FIX: RESOLVENDO ERRO DE ESPAÇO)
+# 7. MOTOR DO PDF (FIX FINAL: SEM ERRO DE ESPAÇO)
 # ==========================================
 class RelatorioPDF(FPDF):
     def header(self):
@@ -180,21 +186,21 @@ class RelatorioPDF(FPDF):
 
 def gerar_pdf_final():
     pdf = RelatorioPDF()
-    pdf.set_margins(15, 15, 15) # Fixando margens para evitar erro de espaço
+    pdf.set_margins(15, 15, 15) # Margens fixas evitam erro de espaço
     pdf.add_page()
     
     pdf.set_font("Arial", 'B', 11)
     pdf.cell(180, 10, "IDENTIFICAÇÃO DA PESQUISA:", 0, 1)
     pdf.set_font("Arial", '', 10)
     
-    # Substituindo multi_cell problemático por cell com quebra manual controlada
-    wbs_txt = f"WBS: {', '.join(wbs_sel)}" if wbs_sel else "WBS: Geral"
-    loc_txt = f"Local Aplicado: {', '.join(locais_sel)}" if locais_sel else "Local Aplicado: Geral"
-    ano_txt = f"Ano do Contrato: {', '.join(anos_sel)}" if anos_sel else "Ano do Contrato: Geral"
+    # Identificação dos Filtros (Respeitando a sua regra)
+    wbs_t = f"WBS: {', '.join(wbs_sel)}" if wbs_sel else "WBS: Geral"
+    loc_t = f"Local Aplicado: {', '.join(locais_sel)}" if locais_sel else "Local Aplicado: Geral"
+    ano_t = f"Ano do Contrato: {', '.join(anos_sel)}" if anos_sel else "Ano do Contrato: Geral"
     
-    pdf.cell(180, 7, wbs_txt.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
-    pdf.cell(180, 7, loc_txt.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
-    pdf.cell(180, 7, ano_txt.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
+    pdf.cell(180, 7, wbs_t.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
+    pdf.cell(180, 7, loc_t.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
+    pdf.cell(180, 7, ano_t.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
     pdf.ln(5)
     
     pdf.set_font("Arial", 'B', 12)
@@ -202,6 +208,7 @@ def gerar_pdf_final():
     pdf.cell(180, 10, "METRICAS CONSOLIDADAS", 0, 1, fill=True)
     pdf.ln(5)
     pdf.set_font("Arial", '', 10)
+    
     m_list = [
         ("Valor Contrato", fmt(v_contrato)), ("Medido P0", fmt(v_p0)), 
         ("Reajuste", fmt(diff)), ("Total Reajustado", fmt(v_reaj)), 
@@ -210,7 +217,11 @@ def gerar_pdf_final():
     for n, v in m_list:
         pdf.cell(60, 10, n, 1); pdf.cell(120, 10, v, 1); pdf.ln()
     
-    return pdf.output(dest='S').encode('latin-1')
+    # Retorno compatível com Streamlit Cloud (FPDF2)
+    try:
+        return pdf.output()
+    except:
+        return pdf.output(dest='S').encode('latin-1')
 
 nome_pdf = f"relatorio_{'_'.join(wbs_sel)}.pdf" if wbs_sel else "relatorio_geral.pdf"
 
