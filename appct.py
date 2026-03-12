@@ -10,10 +10,10 @@ import io
 # ==========================================
 st.set_page_config(page_title="ESTUDO DE CONTRATO", layout="wide", initial_sidebar_state="expanded")
 
-# CSS "ZERO BORDA": Remove bordas, sombras e contornos de todas as camadas
+# CSS "LIMPEZA TOTAL": Sem bordas e com texto centralizado sem cortes
 st.markdown("""
     <style>
-    /* 1. Reset de Cores de Fundo */
+    /* 1. Reset de Interface */
     [data-testid="stHeader"] { background-color: transparent !important; }
     [data-testid="stMainMenu"], .stDeployButton { display: none !important; }
     [data-testid="collapsedControl"] * { color: #0f172a !important; }
@@ -21,8 +21,8 @@ st.markdown("""
     
     .stApp h1 { color: #0f172a !important; font-weight: 800 !important; margin-top: -20px !important; }
 
-    /* 2. REMOÇÃO TOTAL DA BORDINHA PRETA (Botões e Filtros) */
-    /* Atacamos o componente inteiro e suas divisões internas */
+    /* 2. REMOÇÃO DE BORDAS E AJUSTE DE ALTURA (Filtros e Botões) */
+    /* Alvo: O seletor inteiro e suas subcamadas */
     [data-testid="stMultiSelect"], 
     [data-testid="stMultiSelect"] > div, 
     [data-testid="stMultiSelect"] div[data-baseweb="select"],
@@ -34,33 +34,35 @@ st.markdown("""
         border-color: transparent !important;
     }
 
-    /* Aplica o degradê sem nenhuma borda residual */
+    /* Aplica o degradê e libera o espaço para o texto não ser esmagado */
     div[data-baseweb="select"] > div,
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%) !important;
         border-radius: 6px !important;
-        min-height: 48px !important;
+        min-height: 52px !important; /* Altura garantida para o texto */
         height: auto !important;
-        padding: 5px 12px !important;
+        padding: 5px 15px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        border: 0px solid transparent !important; /* Reforço zero */
     }
 
-    /* FORÇA O TEXTO PRETO (Garante visibilidade e alinhamento) */
+    /* FORÇA O TEXTO A APARECER INTEIRO (Preto e nítido) */
+    /* Target específico para o texto "Geral" e seleções */
+    [data-testid="stMultiSelect"] span,
+    [data-testid="stMultiSelect"] div,
+    div[data-baseweb="select"] *,
     [data-testid="stFormSubmitButton"] button p, 
     [data-testid="stDownloadButton"] button p,
-    div[data-baseweb="select"] span,
-    div[data-baseweb="select"] div,
     label {
         color: #000000 !important;
         font-weight: 700 !important;
         font-size: 1rem !important;
-        line-height: 1.4 !important;
+        line-height: normal !important; /* Deixa o navegador calcular o respiro */
         background-color: transparent !important;
-        margin: 0 !important;
+        overflow: visible !important; /* Impede o corte visual */
+        text-decoration: none !important;
     }
 
     /* 3. CARTÕES DE MÉTRICAS */
@@ -177,7 +179,7 @@ with col5: criar_cartao("Extensão Total Única", f"{ext_km:.3f} km")
 with col6: criar_cartao("Custo Total por KM", fmt(c_km))
 
 # ==========================================
-# 7. MOTOR DO PDF
+# 7. MOTOR DO PDF (Preservando o que já funciona)
 # ==========================================
 class RelatorioPDF(FPDF):
     def header(self):
