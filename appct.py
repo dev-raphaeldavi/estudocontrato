@@ -3,14 +3,14 @@ import pandas as pd
 from fpdf import FPDF
 import os
 from datetime import datetime
-import io # Necessário para converter o PDF para o formato que o servidor aceita
+import io  # ESSENCIAL: Resolve o erro de 'unsupported_error' no Cloud
 
 # ==========================================
 # 1. CONFIGURAÇÕES DA PÁGINA E ESTILIZAÇÃO
 # ==========================================
 st.set_page_config(page_title="ESTUDO DE CONTRATO", layout="wide", initial_sidebar_state="expanded")
 
-# CSS AGRESSIVO: Resolve visibilidade, nomes cortados e cores no Cloud
+# CSS BLINDADO: Resolve cortes de texto, visibilidade de títulos e erro de botões
 st.markdown("""
     <style>
     /* 1. Visibilidade do Título Principal e Header */
@@ -18,26 +18,24 @@ st.markdown("""
     [data-testid="stMainMenu"], .stDeployButton { display: none !important; }
     [data-testid="collapsedControl"] * { color: #0f172a !important; }
     
-    /* Força a cor do Título Principal que estava sumindo */
-    .stApp h1 {
-        color: #0f172a !important;
-        font-weight: 800 !important;
-        text-shadow: none !important;
+    .stApp h1 { 
+        color: #0f172a !important; 
+        font-weight: 800 !important; 
+        padding-bottom: 0px !important;
     }
-
-    .block-container { padding-top: 2rem !important; }
+    
     .stApp, [data-testid="stSidebar"] { background-color: #FFFFFF !important; }
 
     /* 2. SOLUÇÃO DEFINITIVA PARA NOMES CORTADOS (BOTÕES E FILTROS) */
-    /* Atacamos o container interno do Streamlit para forçar a altura */
-    div[data-baseweb="select"] > div, 
+    /* Alvo: Botões de formulário, download e multiselect */
     [data-testid="stFormSubmitButton"] button, 
-    [data-testid="stDownloadButton"] button {
+    [data-testid="stDownloadButton"] button,
+    div[data-baseweb="select"] > div {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%) !important;
         border: 1px solid #38bdf8 !important;
         border-radius: 6px !important;
         
-        /* Removemos as travas de altura e permitimos que o botão cresça */
+        /* Força a altura a ser automática para não cortar nomes */
         min-height: 58px !important;
         height: auto !important;
         padding: 10px 15px !important;
@@ -45,23 +43,20 @@ st.markdown("""
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        white-space: normal !important; 
-        text-align: center !important;
-        overflow: visible !important;
     }
-    
-    /* Força texto ESCURO e CENTRALIZADO (Acaba com os nomes bugados/claros) */
+
+    /* Força o texto interno a ser ESCURO, VISÍVEL e SEM CORTES */
     [data-testid="stFormSubmitButton"] button p, 
     [data-testid="stDownloadButton"] button p,
     div[data-baseweb="select"] div,
     span[data-baseweb="tag"],
-    label {
+    label, .stMarkdown p {
         color: #0f172a !important;
         font-weight: 700 !important;
         font-size: 1rem !important;
-        line-height: 1.2 !important; /* Resolve o corte vertical do texto */
+        line-height: 1.2 !important;
+        white-space: normal !important; /* Permite quebra de linha */
         background-color: transparent !important;
-        margin: 0 !important;
     }
 
     /* 3. CARTÕES DE MÉTRICAS */
@@ -75,7 +70,7 @@ st.markdown("""
         margin-bottom: 1.2rem;
     }
     .custom-metric-title { color: #0f172a; font-weight: 700; font-size: 0.95rem; text-transform: uppercase; margin-bottom: 8px; }
-    .custom-metric-value { color: #014c8c; font-size: 2rem; font-weight: 800; }
+    .custom-metric-value { color: #014c8c; font-size: 1.9rem; font-weight: 800; }
 
     [data-testid="stForm"] { border: none !important; padding: 0 !important; }
     </style>
@@ -135,7 +130,7 @@ if not df.empty:
         wbs_sel = st.multiselect("Estrutura (WBS):", options=sorted(df['WBS'].unique()), placeholder="Geral")
         locais_sel = st.multiselect("Local Aplicado:", options=sorted(df['LOCAL APLICADO'].unique()), placeholder="Geral")
         anos_sel = st.multiselect("Ano do Contrato:", options=sorted(df['ANO DO CONTRATO'].unique()), placeholder="Geral")
-        st.form_submit_button("Processar Dados")
+        btn_processar = st.form_submit_button("Processar Dados")
 
     if wbs_sel: df_filtrado = df_filtrado[df_filtrado['WBS'].isin(wbs_sel)]
     if locais_sel: df_filtrado = df_filtrado[df_filtrado['LOCAL APLICADO'].isin(locais_sel)]
@@ -178,13 +173,13 @@ with col5: criar_cartao("Extensão Total Única", f"{ext_km:.3f} km")
 with col6: criar_cartao("Custo Total por KM", fmt(c_km))
 
 # ==========================================
-# 7. MOTOR DO PDF (CORREÇÃO PARA AMBIENTE ONLINE)
+# 7. MOTOR DO PDF (CORREÇÃO ABSOLUTA PARA ONLINE)
 # ==========================================
 class RelatorioPDF(FPDF):
     def header(self):
         if tem_logo: self.image(caminho_logo, 10, 8, 35)
         self.set_xy(50, 15); self.set_font('Arial', 'B', 14)
-        self.cell(0, 10, 'ESTUDO DE CONTRATO - RELATORIO GERENCIAL', 0, 1, 'L'); self.ln(15)
+        self.cell(150, 10, 'ESTUDO DE CONTRATO - RELATORIO GERENCIAL', 0, 1, 'L'); self.ln(10)
     def footer(self):
         self.set_y(-15); self.set_font('Arial', 'I', 8)
         self.cell(0, 10, f'Impresso em: {datetime.now().strftime("%d/%m/%Y %H:%M")} | Pagina {self.page_no()}', 0, 0, 'C')
@@ -194,7 +189,7 @@ def gerar_pdf_final():
     pdf.set_margins(15, 15, 15)
     pdf.add_page()
     
-    # Identificação da Pesquisa no PDF
+    # Identificação da Pesquisa
     pdf.set_font("Arial", 'B', 11)
     pdf.cell(180, 10, "IDENTIFICACAO DA PESQUISA:", 0, 1)
     pdf.set_font("Arial", '', 10)
@@ -208,48 +203,41 @@ def gerar_pdf_final():
     pdf.cell(180, 7, a_t.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
     pdf.ln(5)
     
+    # Tabela de Métricas
     pdf.set_font("Arial", 'B', 12)
     pdf.set_fill_color(240, 240, 240)
     pdf.cell(180, 10, "METRICAS CONSOLIDADAS", 0, 1, fill=True)
     pdf.ln(5)
     pdf.set_font("Arial", '', 10)
     m_list = [
-        ("Valor em referência ao Contrato ", fmt(v_contrato)), 
-        ("Valor em referência P0 ", fmt(v_p0)), 
-        ("Valor de Reajuste", fmt(diff)), 
-        ("Valor Final Reajustado", fmt(v_reaj)), 
-        ("Extensao (KM)", f"{ext_km:.3f} km"), 
-        ("Valor R$/KM", fmt(c_km))
+        ("Valor Contrato", fmt(v_contrato)), ("Medido P0", fmt(v_p0)), 
+        ("Reajuste", fmt(diff)), ("Total Reajustado", fmt(v_reaj)), 
+        ("Extensao (KM)", f"{ext_km:.3f} km"), ("Custo R$/KM", fmt(c_km))
     ]
     for n, v in m_list:
-        pdf.cell(60, 10, n.encode('latin-1', 'replace').decode('latin-1'), 1)
-        pdf.cell(120, 10, v.encode('latin-1', 'replace').decode('latin-1'), 1)
+        pdf.cell(70, 10, n.encode('latin-1', 'replace').decode('latin-1'), 1)
+        pdf.cell(110, 10, v.encode('latin-1', 'replace').decode('latin-1'), 1)
         pdf.ln()
     
-    # --- O PONTO CRÍTICO: Conversão para bytes aceitos pelo Cloud ---
-    try:
-        # Tenta extrair como bytes (Padrão fpdf2 / Cloud)
-        pdf_bytes = pdf.output()
-        if isinstance(pdf_bytes, (bytes, bytearray)):
-            return pdf_bytes
-        # Se retornar string (Padrão fpdf antigo / Local), codifica
-        return pdf_bytes.encode('latin-1')
-    except Exception:
-        # Último recurso: Buffer de memória
-        return pdf.output(dest='S').encode('latin-1')
+    # O SEGREDO: Usar BytesIO para o Streamlit Cloud
+    buffer = io.BytesIO()
+    pdf_str = pdf.output(dest='S')
+    if isinstance(pdf_str, str):
+        buffer.write(pdf_str.encode('latin-1'))
+    else:
+        buffer.write(pdf_str)
+    buffer.seek(0)
+    return buffer
 
-# Nome dinâmico
 nome_pdf = f"relatorio_{'_'.join(wbs_sel)}.pdf" if wbs_sel else "relatorio_geral.pdf"
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📄 Relatórios")
 
-# Chamada da função garantindo o formato correto
-pdf_data = gerar_pdf_final()
-
+# Passamos o BytesIO diretamente para o botão
 st.sidebar.download_button(
     label="Baixar Relatório em PDF",
-    data=pdf_data,
+    data=gerar_pdf_final(),
     file_name=nome_pdf,
     mime="application/pdf",
     use_container_width=True
