@@ -10,76 +10,65 @@ import io
 # ==========================================
 st.set_page_config(page_title="ESTUDO DE CONTRATO", layout="wide", initial_sidebar_state="expanded")
 
-# CSS: Ajuste cirúrgico para evitar cortes e manter o design
+# CSS REFORÇADO: Garante visibilidade total e botões sem cortes
 st.markdown("""
     <style>
+    /* Força visibilidade do cabeçalho e título principal */
     [data-testid="stHeader"] { background-color: transparent !important; }
     [data-testid="stMainMenu"], .stDeployButton { display: none !important; }
-    [data-testid="collapsedControl"] * { color: #1e293b !important; }
+    [data-testid="collapsedControl"] * { color: #0f172a !important; }
+    
+    .stApp h1, .stApp h2, .stApp h3 {
+        color: #0f172a !important;
+        font-weight: 800 !important;
+    }
+
     .block-container { padding-top: 2rem !important; }
     .stApp, [data-testid="stSidebar"] { background-color: #FFFFFF !important; }
 
-    /* Estilização Unificada dos Botões e Seletores (Filtros) */
+    /* Estilização Unificada: Selectores e Botões */
     div[data-baseweb="select"] > div, 
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%) !important;
         border: 1px solid #38bdf8 !important;
         border-radius: 6px !important;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
-        
-        /* CORREÇÃO DO CORTE: Altura flexível e padding ajustado */
-        min-height: 52px !important; 
-        height: auto !important;
-        padding: 8px 12px !important;
-        
+        min-height: 55px !important;
+        padding: 5px 15px !important;
         cursor: pointer !important;
         transition: all 0.3s ease !important;
         width: 100% !important;
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        white-space: normal !important; 
+        white-space: normal !important;
         text-align: center !important;
-        overflow: visible !important; /* Garante que o texto não suma */
-    }
-    
-    div[data-baseweb="select"] > div:hover, 
-    [data-testid="stFormSubmitButton"] button:hover, 
-    [data-testid="stDownloadButton"] button:hover {
-        background: linear-gradient(135deg, #bae6fd 0%, #7dd3fc 100%) !important;
-        border-color: #7dd3fc !important;
+        overflow: visible !important;
     }
 
-    /* Ajuste fino no texto interno para evitar deslocamentos */
+    /* Força texto ESCURO dentro de tudo que for azul */
     [data-testid="stFormSubmitButton"] button p, 
     [data-testid="stDownloadButton"] button p,
     div[data-baseweb="select"] div,
-    span[data-baseweb="tag"] {
+    span[data-baseweb="tag"],
+    label {
         color: #0f172a !important;
         font-weight: 700 !important;
-        background-color: transparent !important;
-        font-size: 0.95rem !important;
-        line-height: 1.2 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    /* Resolve o problema de sobreposição em seletores vazios */
-    div[data-baseweb="select"] > div > div {
+        font-size: 1rem !important;
         background-color: transparent !important;
     }
 
+    /* Cartões de Métricas */
     .custom-metric-card {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%);
         border: 1px solid #38bdf8;
-        border-radius: 6px;
-        padding: 20px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        border-radius: 8px;
+        padding: 22px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.08);
         text-align: left;
         margin-bottom: 1.2rem;
     }
-    .custom-metric-title { color: #0f172a; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 8px; }
+    .custom-metric-title { color: #0f172a; font-weight: 700; font-size: 0.95rem; text-transform: uppercase; margin-bottom: 8px; }
     .custom-metric-value { color: #014c8c; font-size: 2rem; font-weight: 800; }
 
     [data-testid="stForm"] { border: none !important; padding: 0 !important; }
@@ -137,17 +126,17 @@ wbs_sel, locais_sel, anos_sel = [], [], []
 if not df.empty:
     with st.sidebar.form("form_pesquisa"):
         st.markdown("### Filtros de Pesquisa")
-        wbs_sel = st.multiselect("Estrutura (WBS):", options=sorted(df['WBS'].unique()), placeholder="Geral")
-        locais_sel = st.multiselect("Local Aplicado:", options=sorted(df['LOCAL APLICADO'].unique()), placeholder="Geral")
-        anos_sel = st.multiselect("Ano do Contrato:", options=sorted(df['ANO DO CONTRATO'].unique()), placeholder="Geral")
-        btn_processar = st.form_submit_button("Processar Dados")
+        wbs_sel = st.multiselect("Estrutura (WBS):", options=sorted(df['WBS'].unique()), placeholder="Deixe em branco p/ geral")
+        locais_sel = st.multiselect("Local Aplicado:", options=sorted(df['LOCAL APLICADO'].unique()), placeholder="Deixe em branco p/ geral")
+        anos_sel = st.multiselect("Ano do Contrato:", options=sorted(df['ANO DO CONTRATO'].unique()), placeholder="Deixe em branco p/ geral")
+        st.form_submit_button("Processar Dados")
 
     if wbs_sel: df_filtrado = df_filtrado[df_filtrado['WBS'].isin(wbs_sel)]
     if locais_sel: df_filtrado = df_filtrado[df_filtrado['LOCAL APLICADO'].isin(locais_sel)]
     if anos_sel: df_filtrado = df_filtrado[df_filtrado['ANO DO CONTRATO'].isin(anos_sel)]
 
 # ==========================================
-# 5. CÁLCULOS
+# 5. CÁLCULOS TÉCNICOS
 # ==========================================
 v_contrato = df_filtrado['VALOR DO CONTRATO'].sum()
 v_p0 = df_filtrado['MEDIDO P0'].sum()
@@ -170,6 +159,7 @@ def fmt(v): return f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X
 # ==========================================
 if tem_logo: st.image(caminho_logo, width=210)
 st.title("ESTUDO DE CONTRATO")
+st.markdown("Visão Gerencial Físico-Financeira")
 st.markdown("---")
 
 col1, col2, col3 = st.columns(3)
@@ -183,7 +173,7 @@ with col5: criar_cartao("Extensão Total Única", f"{ext_km:.3f} km")
 with col6: criar_cartao("Custo Total por KM", fmt(c_km))
 
 # ==========================================
-# 7. MOTOR DO PDF
+# 7. MOTOR DO PDF (Buffer de Memória para Cloud)
 # ==========================================
 class RelatorioPDF(FPDF):
     def header(self):
@@ -194,10 +184,9 @@ class RelatorioPDF(FPDF):
         self.set_y(-15); self.set_font('Arial', 'I', 8)
         self.cell(0, 10, f'Impresso em: {datetime.now().strftime("%d/%m/%Y %H:%M")} | Pagina {self.page_no()}', 0, 0, 'C')
 
-def gerar_pdf_bytes():
+def gerar_pdf_final():
     pdf = RelatorioPDF()
     pdf.add_page()
-    
     pdf.set_font("Arial", 'B', 11)
     pdf.cell(0, 10, "IDENTIFICAÇÃO DA PESQUISA:", 0, 1)
     pdf.set_font("Arial", '', 10)
@@ -206,9 +195,9 @@ def gerar_pdf_bytes():
     txt_loc = f"Local Aplicado: {', '.join(locais_sel)}" if locais_sel else "Local Aplicado: Geral"
     txt_ano = f"Ano do Contrato: {', '.join(anos_sel)}" if anos_sel else "Ano do Contrato: Geral"
     
-    pdf.cell(0, 6, txt_wbs.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
-    pdf.cell(0, 6, txt_loc.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
-    pdf.cell(0, 6, txt_ano.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
+    pdf.multi_cell(0, 6, txt_wbs.encode('latin-1', 'replace').decode('latin-1'))
+    pdf.multi_cell(0, 6, txt_loc.encode('latin-1', 'replace').decode('latin-1'))
+    pdf.multi_cell(0, 6, txt_ano.encode('latin-1', 'replace').decode('latin-1'))
     pdf.ln(5)
     
     pdf.set_font("Arial", 'B', 12)
@@ -217,33 +206,23 @@ def gerar_pdf_bytes():
     pdf.ln(5)
     pdf.set_font("Arial", '', 10)
     m_list = [
-        ("Valor em referência ao Contrato ", fmt(v_contrato)), 
-        ("Valor em referência P0 ", fmt(v_p0)), 
-        ("Valor de Reajuste", fmt(diff)), 
-        ("Valor Final Reajustado", fmt(v_reaj)), 
-        ("Extensão (KM)", f"{ext_km:.3f} km"), 
-        ("Valor R$/KM", fmt(c_km))
+        ("Valor Contrato", fmt(v_contrato)), ("Medido P0", fmt(v_p0)), 
+        ("Reajuste", fmt(diff)), ("Total Reajustado", fmt(v_reaj)), 
+        ("Extensao (KM)", f"{ext_km:.3f} km"), ("Custo R$/KM", fmt(c_km))
     ]
     for n, v in m_list:
-        pdf.cell(60, 10, n.encode('latin-1', 'replace').decode('latin-1'), 1)
-        pdf.cell(130, 10, v.encode('latin-1', 'replace').decode('latin-1'), 1)
-        pdf.ln()
+        pdf.cell(60, 10, n, 1); pdf.cell(130, 10, v, 1); pdf.ln()
     
-    try:
-        return bytes(pdf.output())
-    except:
-        return pdf.output(dest='S').encode('latin-1')
+    # Retorna buffer de bytes para o Streamlit Cloud
+    return pdf.output(dest='S').encode('latin-1')
 
 nome_pdf = f"relatorio_{'_'.join(wbs_sel)}.pdf" if wbs_sel else "relatorio_geral.pdf"
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📄 Relatórios")
-
-pdf_output = gerar_pdf_bytes()
-
 st.sidebar.download_button(
     label="Baixar Relatório em PDF",
-    data=pdf_output,
+    data=gerar_pdf_final(),
     file_name=nome_pdf,
     mime="application/pdf",
     use_container_width=True
