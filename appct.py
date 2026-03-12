@@ -10,7 +10,7 @@ import io
 # ==========================================
 st.set_page_config(page_title="ESTUDO DE CONTRATO", layout="wide", initial_sidebar_state="expanded")
 
-# CSS "TOTAL CLEAR": Remove bordas, contornos e resolve o achatamento do texto
+# CSS BLINDADO: Garante visibilidade do texto, remove bordas e impede achatamento
 st.markdown("""
     <style>
     /* 1. Visibilidade do Título e Topo */
@@ -26,10 +26,10 @@ st.markdown("""
     
     .stApp, [data-testid="stSidebar"] { background-color: #FFFFFF !important; }
 
-    /* 2. RESOLVENDO TEXTO ACHATADO E CORTADO (Filtros e Botões) */
-    /* Atacamos todas as camadas internas do seletor para remover bordas e liberar espaço */
-    [data-testid="stMultiSelect"] div,
-    [data-testid="stMultiSelect"] [data-baseweb="select"],
+    /* 2. REMOÇÃO DE BORDAS E AJUSTE DE CORES (Selectores e Botões) */
+    /* Removemos as bordas de todas as camadas do seletor */
+    [data-testid="stMultiSelect"] > div,
+    [data-testid="stMultiSelect"] div[data-baseweb="select"],
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
         border: none !important;
@@ -37,7 +37,7 @@ st.markdown("""
         box-shadow: none !important;
     }
 
-    /* Aplica o degradê e garante que o texto tenha altura livre para aparecer */
+    /* Aplica o degradê e garante altura para o texto aparecer */
     div[data-baseweb="select"] > div,
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
@@ -45,25 +45,24 @@ st.markdown("""
         border-radius: 6px !important;
         min-height: 48px !important;
         height: auto !important;
-        padding: 5px 12px !important; /* Respiro interno para o texto */
+        padding: 5px 12px !important;
         display: flex !important;
         align-items: center !important;
-        justify-content: center !important;
     }
 
-    /* FORÇA O TEXTO A APARECER (Evita o efeito achatado da imagem image_808e34) */
-    [data-testid="stFormSubmitButton"] button p, 
-    [data-testid="stDownloadButton"] button p,
-    div[data-baseweb="select"] span,
-    div[data-baseweb="select"] div,
-    label {
-        color: #0f172a !important;
+    /* FORÇA O TEXTO A FICAR PRETO E VISÍVEL (Resolve o sumiço do 'Geral') */
+    /* Atacamos o placeholder e o texto selecionado especificamente */
+    [data-testid="stMultiSelect"] span,
+    [data-testid="stMultiSelect"] div,
+    [data-testid="stMultiSelect"] p,
+    div[data-baseweb="select"] *, 
+    label, .stMarkdown p {
+        color: #000000 !important; /* Preto absoluto para contraste total */
         font-weight: 700 !important;
         font-size: 1rem !important;
-        line-height: 1.2 !important; /* Espaço vital para o texto */
+        line-height: 1.5 !important;
         background-color: transparent !important;
-        margin: 0 !important;
-        padding: 0 !important;
+        opacity: 1 !important;
     }
 
     /* 3. CARTÕES DE MÉTRICAS */
