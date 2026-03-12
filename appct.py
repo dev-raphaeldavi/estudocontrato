@@ -3,24 +3,30 @@ import pandas as pd
 from fpdf import FPDF
 import os
 from datetime import datetime
-import io  # ESSENCIAL para resolver o erro no Streamlit Cloud
+import io
 
 # ==========================================
 # 1. CONFIGURAÇÕES DA PÁGINA E ESTILIZAÇÃO
 # ==========================================
 st.set_page_config(page_title="ESTUDO DE CONTRATO", layout="wide", initial_sidebar_state="expanded")
 
-# CSS BLINDADO: Resolve cortes de texto e garante visibilidade no Cloud
+# CSS AGRESSIVO: Resolve visibilidade, nomes cortados e cores
 st.markdown("""
     <style>
+    /* 1. Visibilidade Geral */
     [data-testid="stHeader"] { background-color: transparent !important; }
     [data-testid="stMainMenu"], .stDeployButton { display: none !important; }
     [data-testid="collapsedControl"] * { color: #0f172a !important; }
-    
-    .stApp h1, .stApp h2, .stApp h3 { color: #0f172a !important; font-weight: 800 !important; }
     .stApp, [data-testid="stSidebar"] { background-color: #FFFFFF !important; }
+    
+    /* 2. Título Principal e Labels */
+    .stApp h1, .stApp h2, .stApp h3, .stApp p, label {
+        color: #0f172a !important;
+        font-weight: 700 !important;
+        opacity: 1 !important;
+    }
 
-    /* SOLUÇÃO PARA O CORTE NOS NOMES: Altura flexível e alinhamento real */
+    /* 3. SOLUÇÃO PARA NOMES CORTADOS (BOTÕES E FILTROS) */
     div[data-baseweb="select"] > div, 
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
@@ -28,30 +34,32 @@ st.markdown("""
         border: 1px solid #38bdf8 !important;
         border-radius: 6px !important;
         
-        /* Ajustes de altura e respiro para o texto não cortar */
+        /* Remove travas de altura do Streamlit */
         min-height: 55px !important;
         height: auto !important;
-        padding: 10px 15px !important;
+        padding: 10px !important;
         
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        cursor: pointer !important;
+        white-space: normal !important; /* Permite quebra de linha */
+        overflow: visible !important;
     }
 
-    /* Força o texto interno a ser preto e visível */
+    /* Força texto ESCURO e CENTRALIZADO dentro dos botões */
     [data-testid="stFormSubmitButton"] button p, 
     [data-testid="stDownloadButton"] button p,
     div[data-baseweb="select"] div,
-    span[data-baseweb="tag"],
-    label {
+    span[data-baseweb="tag"] {
         color: #0f172a !important;
-        font-weight: 700 !important;
-        font-size: 1rem !important;
-        line-height: 1.2 !important; /* Resolve o corte vertical do texto */
+        font-weight: 800 !important;
+        font-size: 0.95rem !important;
+        line-height: 1.2 !important;
         background-color: transparent !important;
+        text-align: center !important;
     }
 
+    /* 4. CARTÕES DE MÉTRICAS */
     .custom-metric-card {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%);
         border: 1px solid #38bdf8;
@@ -61,8 +69,8 @@ st.markdown("""
         text-align: left;
         margin-bottom: 1.2rem;
     }
-    .custom-metric-title { color: #0f172a; font-weight: 700; font-size: 0.95rem; text-transform: uppercase; }
-    .custom-metric-value { color: #014c8c; font-size: 2rem; font-weight: 800; }
+    .custom-metric-title { color: #0f172a; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; }
+    .custom-metric-value { color: #014c8c; font-size: 1.9rem; font-weight: 800; }
 
     [data-testid="stForm"] { border: none !important; padding: 0 !important; }
     </style>
@@ -72,7 +80,7 @@ def criar_cartao(titulo, valor):
     st.markdown(f'<div class="custom-metric-card"><div class="custom-metric-title">{titulo}</div><div class="custom-metric-value">{valor}</div></div>', unsafe_allow_html=True)
 
 # ==========================================
-# 2. LÓGICA DE EXTENSÕES
+# 2. LÓGICA DE EXTENSÕES (Aquedutos e Canais)
 # ==========================================
 MAPA_EXTENSAO_KM = {
     '2218': 28.38, '2718': 28.38, '2219': 3.02, '2719': 3.02,
@@ -165,7 +173,7 @@ with col5: criar_cartao("Extensão Total Única", f"{ext_km:.3f} km")
 with col6: criar_cartao("Custo Total por KM", fmt(c_km))
 
 # ==========================================
-# 7. MOTOR DO PDF (CORREÇÃO DEFINITIVA PARA ONLINE)
+# 7. MOTOR DO PDF (CORREÇÃO ABSOLUTA)
 # ==========================================
 class RelatorioPDF(FPDF):
     def header(self):
@@ -181,18 +189,19 @@ def gerar_pdf_final():
     pdf.set_margins(15, 15, 15)
     pdf.add_page()
     
+    # Identificação do Filtro no PDF
     pdf.set_font("Arial", 'B', 11)
-    pdf.cell(180, 10, "IDENTIFICAÇÃO DA PESQUISA:", 0, 1)
+    pdf.cell(180, 10, "IDENTIFICACAO DA PESQUISA:", 0, 1)
     pdf.set_font("Arial", '', 10)
     
-    txt_wbs = f"WBS: {', '.join(wbs_sel)}" if wbs_sel else "WBS: Geral"
-    txt_loc = f"Local Aplicado: {', '.join(locais_sel)}" if locais_sel else "Local Aplicado: Geral"
-    txt_ano = f"Ano do Contrato: {', '.join(anos_sel)}" if anos_sel else "Ano do Contrato: Geral"
+    w_t = f"WBS: {', '.join(wbs_sel)}" if wbs_sel else "WBS: Geral"
+    l_t = f"Local: {', '.join(locais_sel)}" if locais_sel else "Local: Geral"
+    a_t = f"Ano: {', '.join(anos_sel)}" if anos_sel else "Ano: Geral"
     
-    # Encode 'replace' para evitar quebra por caracteres especiais no servidor Linux
-    pdf.cell(180, 7, txt_wbs.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
-    pdf.cell(180, 7, txt_loc.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
-    pdf.cell(180, 7, txt_ano.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
+    # O .encode('latin-1', 'replace') resolve caracteres brasileiros no Linux
+    pdf.cell(180, 7, w_t.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
+    pdf.cell(180, 7, l_t.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
+    pdf.cell(180, 7, a_t.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
     pdf.ln(5)
     
     pdf.set_font("Arial", 'B', 12)
@@ -208,16 +217,20 @@ def gerar_pdf_final():
     for n, v in m_list:
         pdf.cell(60, 10, n, 1); pdf.cell(120, 10, v, 1); pdf.ln()
     
-    # RETORNO EM BYTES PUROS (O segredo para o Streamlit Cloud)
-    # output() com dest='S' retorna string, então convertemos para bytes de forma segura
-    return pdf.output(dest='S').encode('latin-1')
+    # --- O PONTO CHAVE DA CORREÇÃO ---
+    # Capturamos o PDF em uma variável
+    resultado_pdf = pdf.output()
+    
+    # Se o resultado já for bytes (comum no Cloud/fpdf2), retornamos direto
+    if isinstance(resultado_pdf, (bytes, bytearray)):
+        return resultado_pdf
+    # Se for string (comum local/fpdf antigo), codificamos
+    return resultado_pdf.encode('latin-1')
 
 nome_pdf = f"relatorio_{'_'.join(wbs_sel)}.pdf" if wbs_sel else "relatorio_geral.pdf"
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📄 Relatórios")
-
-# Chamada direta garantindo bytes
 st.sidebar.download_button(
     label="Baixar Relatório em PDF",
     data=gerar_pdf_final(),
