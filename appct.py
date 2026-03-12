@@ -3,13 +3,14 @@ import pandas as pd
 from fpdf import FPDF
 import os
 from datetime import datetime
+import io  # Necessário para processamento de arquivos em nuvem
 
 # ==========================================
 # 1. CONFIGURAÇÕES DA PÁGINA E ESTILIZAÇÃO
 # ==========================================
 st.set_page_config(page_title="ESTUDO DE CONTRATO", layout="wide", initial_sidebar_state="expanded")
 
-# CSS: Mantendo exatamente a sua estrutura e design
+# CSS: Ajustado para evitar cortes e garantir degradê online
 st.markdown("""
     <style>
     [data-testid="stHeader"] { background-color: transparent !important; }
@@ -18,6 +19,7 @@ st.markdown("""
     .block-container { padding-top: 2rem !important; }
     .stApp, [data-testid="stSidebar"] { background-color: #FFFFFF !important; }
 
+    /* Estilização Unificada dos Botões */
     div[data-baseweb="select"] > div, 
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
@@ -25,14 +27,16 @@ st.markdown("""
         border: 1px solid #38bdf8 !important;
         border-radius: 6px !important;
         box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
-        min-height: 48px !important;
-        padding: 10px 15px !important;
+        min-height: 52px !important; /* Aumentado para acomodar o texto */
+        padding: 5px 15px !important;
         cursor: pointer !important;
         transition: all 0.3s ease !important;
         width: 100% !important;
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
+        white-space: normal !important; /* Permite quebra de linha se o nome for longo */
+        text-align: center !important;
     }
     
     div[data-baseweb="select"] > div:hover, 
@@ -42,6 +46,7 @@ st.markdown("""
         border-color: #7dd3fc !important;
     }
 
+    /* Texto dentro dos botões */
     [data-testid="stFormSubmitButton"] button p, 
     [data-testid="stDownloadButton"] button p,
     div[data-baseweb="select"] div,
@@ -49,7 +54,8 @@ st.markdown("""
         color: #0f172a !important;
         font-weight: 700 !important;
         background-color: transparent !important;
-        font-size: 1rem !important;
+        font-size: 0.95rem !important; /* Ajuste leve no tamanho para caber no sidebar */
+        line-height: 1.2 !important;
     }
 
     .custom-metric-card {
@@ -72,7 +78,7 @@ def criar_cartao(titulo, valor):
     st.markdown(f'<div class="custom-metric-card"><div class="custom-metric-title">{titulo}</div><div class="custom-metric-value">{valor}</div></div>', unsafe_allow_html=True)
 
 # ==========================================
-# 2. LÓGICA DE EXTENSÕES
+# 2. LÓGICA DE EXTENSÕES (Aquedutos e Canais)
 # ==========================================
 MAPA_EXTENSAO_KM = {
     '2218': 28.38, '2718': 28.38, '2219': 3.02, '2719': 3.02,
@@ -165,7 +171,7 @@ with col5: criar_cartao("Extensão Total Única", f"{ext_km:.3f} km")
 with col6: criar_cartao("Custo Total por KM", fmt(c_km))
 
 # ==========================================
-# 7. MOTOR DO PDF (COM IDENTIFICAÇÃO DO FILTRO)
+# 7. MOTOR DO PDF (CORREÇÃO PARA AMBIENTE ONLINE)
 # ==========================================
 class RelatorioPDF(FPDF):
     def header(self):
@@ -180,7 +186,7 @@ def gerar_pdf_bytes():
     pdf = RelatorioPDF()
     pdf.add_page()
     
-    # --- Identificação dos Filtros no PDF ---
+    # Identificação dos Filtros
     pdf.set_font("Arial", 'B', 11)
     pdf.cell(0, 10, "IDENTIFICAÇÃO DA PESQUISA:", 0, 1)
     pdf.set_font("Arial", '', 10)
@@ -189,34 +195,50 @@ def gerar_pdf_bytes():
     txt_loc = f"Local Aplicado: {', '.join(locais_sel)}" if locais_sel else "Local Aplicado: Geral"
     txt_ano = f"Ano do Contrato: {', '.join(anos_sel)}" if anos_sel else "Ano do Contrato: Geral"
     
-    pdf.cell(0, 6, txt_wbs, 0, 1)
-    pdf.cell(0, 6, txt_loc, 0, 1)
-    pdf.cell(0, 6, txt_ano, 0, 1)
+    pdf.cell(0, 6, txt_wbs.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
+    pdf.cell(0, 6, txt_loc.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
+    pdf.cell(0, 6, txt_ano.encode('latin-1', 'replace').decode('latin-1'), 0, 1)
     pdf.ln(5)
     
-    # --- Métricas ---
+    # Métricas
     pdf.set_font("Arial", 'B', 12)
     pdf.set_fill_color(240, 240, 240)
     pdf.cell(0, 10, "METRICAS CONSOLIDADAS", 0, 1, fill=True)
     pdf.ln(5)
     pdf.set_font("Arial", '', 10)
-    m_list = [("Valor em referência ao Contrato ", fmt(v_contrato)), ("Valor em referência P0 ", fmt(v_p0)), ("Valor de Reajuste", fmt(diff)), ("Valor Final Reajustado", fmt(v_reaj)), ("Extensão (KM)", f"{ext_km:.3f} km"), ("Valor R$/KM", fmt(c_km))]
+    m_list = [
+        ("Valor em referência ao Contrato ", fmt(v_contrato)), 
+        ("Valor em referência P0 ", fmt(v_p0)), 
+        ("Valor de Reajuste", fmt(diff)), 
+        ("Valor Final Reajustado", fmt(v_reaj)), 
+        ("Extensão (KM)", f"{ext_km:.3f} km"), 
+        ("Valor R$/KM", fmt(c_km))
+    ]
     for n, v in m_list:
-        pdf.cell(60, 10, n, 1); pdf.cell(130, 10, v, 1); pdf.ln()
+        pdf.cell(60, 10, n.encode('latin-1', 'replace').decode('latin-1'), 1)
+        pdf.cell(130, 10, v.encode('latin-1', 'replace').decode('latin-1'), 1)
+        pdf.ln()
     
-    out = pdf.output(dest='S')
-    if isinstance(out, str):
-        return out.encode('latin-1')
-    return out
+    # Gerar como string e converter para bytes de forma robusta
+    try:
+        # Tenta o método direto de bytes (fpdf2)
+        return bytes(pdf.output())
+    except:
+        # Tenta o método antigo (fpdf)
+        return pdf.output(dest='S').encode('latin-1')
 
 # Nome dinâmico do arquivo
 nome_pdf = f"relatorio_{'_'.join(wbs_sel)}.pdf" if wbs_sel else "relatorio_geral.pdf"
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📄 Relatórios")
+
+# Solução final para o erro de bytes/mime no Streamlit Online
+pdf_output = gerar_pdf_bytes()
+
 st.sidebar.download_button(
     label="Baixar Relatório em PDF",
-    data=gerar_pdf_bytes(),
+    data=pdf_output,
     file_name=nome_pdf,
     mime="application/pdf",
     use_container_width=True
