@@ -10,30 +10,24 @@ import io
 # ==========================================
 st.set_page_config(page_title="ESTUDO DE CONTRATO", layout="wide", initial_sidebar_state="expanded")
 
-# CSS ANTI-ESMAGAMENTO: Resolve visibilidade, bordas e garante respiro vertical
+# CSS "FIM DO ESMAGAMENTO": Foca exclusivamente no espaço interno dos seletores
 st.markdown("""
     <style>
-    /* 1. Reset de Interface e Título Principal */
+    /* 1. Reset e Visibilidade Sidebar */
     [data-testid="stHeader"] { background-color: transparent !important; }
     [data-testid="stMainMenu"], .stDeployButton { display: none !important; }
     [data-testid="collapsedControl"] * { color: #0f172a !important; }
     .stApp, [data-testid="stSidebar"] { background-color: #FFFFFF !important; }
     
     .stApp h1 { color: #0f172a !important; font-weight: 800 !important; margin-top: -20px !important; }
-
-    /* --- AJUSTE: TEXTO 'FILTROS DE PESQUISA' EM PRETO NEGRITO --- */
-    [data-testid="stSidebar"] h3, 
-    [data-testid="stSidebar"] .stMarkdown p {
-        color: #000000 !important;
-        font-weight: 800 !important;
-        opacity: 1 !important;
+    [data-testid="stSidebar"] h3, [data-testid="stSidebar"] .stMarkdown p {
+        color: #000000 !important; font-weight: 800 !important;
     }
 
-    /* 2. DESIGN UNIFICADO CONTRA ESMAGAMENTO (Filtros e Botões) */
-    /* Removemos as bordas de todas as subcamadas */
+    /* 2. SOLUÇÃO DEFINITIVA PARA O TEXTO ESMAGADO (image_7fa918.png) */
+    /* Removemos bordas internas fantasmas */
     [data-testid="stMultiSelect"] div,
     [data-testid="stMultiSelect"] [data-baseweb="select"],
-    [data-testid="stMultiSelect"] [data-baseweb="select"] > div,
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
         border: none !important;
@@ -41,50 +35,49 @@ st.markdown("""
         box-shadow: none !important;
     }
 
-    /* O SEGREDO: min-height maior + padding vertical fixo */
+    /* Ajuste de altura e bordinha preta única */
     [data-testid="stMultiSelect"] [data-baseweb="select"] > div,
     [data-testid="stFormSubmitButton"] button, 
     [data-testid="stDownloadButton"] button {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%) !important;
         border-radius: 6px !important;
+        border: 1px solid #000000 !important; 
         
-        /* Força o respiro vertical para não esmagar o texto */
-        min-height: 60px !important; 
+        /* O segredo: Altura mínima alta + padding generoso para centralizar */
+        min-height: 60px !important;
         height: auto !important;
-        padding-top: 10px !important;
-        padding-bottom: 10px !important;
-        padding-left: 15px !important;
-        padding-right: 15px !important;
+        padding-top: 12px !important;
+        padding-bottom: 12px !important;
         
         display: flex !important;
         align-items: center !important;
-        justify-content: center !important;
-        border: 1px solid #000000 !important; /* Bordinha preta padronizada */
     }
 
-    /* 3. VISIBILIDADE DO TEXTO (Preto Absoluto) */
+    /* FORÇA O TEXTO A APARECER INTEIRO (Preto absoluto e sem corte) */
+    /* Atacamos o span e as divs de texto de forma redundante para o Cloud não ignorar */
     [data-testid="stFormSubmitButton"] button p, 
     [data-testid="stDownloadButton"] button p,
     [data-testid="stMultiSelect"] span,
-    [data-testid="stMultiSelect"] div,
-    div[data-baseweb="select"] *,
+    [data-testid="stMultiSelect"] div[data-baseweb="select"] div,
     label {
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
         font-weight: 700 !important;
         font-size: 1rem !important;
-        line-height: 1.2 !important;
+        
+        /* Reset de altura de linha para evitar o esmagamento vertical */
+        line-height: 1.5 !important; 
         background-color: transparent !important;
-        margin: 0 !important;
+        overflow: visible !important;
+        display: inline-block !important;
     }
 
-    /* 4. CARTÕES DE MÉTRICAS */
+    /* 3. CARTÕES DE MÉTRICAS */
     .custom-metric-card {
         background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%);
         border: 1px solid #000000;
         border-radius: 8px;
         padding: 22px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.08);
         text-align: left;
         margin-bottom: 1.2rem;
     }
@@ -99,7 +92,7 @@ def criar_cartao(titulo, valor):
     st.markdown(f'<div class="custom-metric-card"><div class="custom-metric-title">{titulo}</div><div class="custom-metric-value">{valor}</div></div>', unsafe_allow_html=True)
 
 # ==========================================
-# 2. LÓGICA DE EXTENSÕES
+# 2. LÓGICA DE EXTENSÕES (PISF)
 # ==========================================
 MAPA_EXTENSAO_KM = {
     '2218': 28.38, '2718': 28.38, '2219': 3.02, '2719': 3.02,
